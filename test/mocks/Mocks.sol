@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IIntake} from "../../src/interfaces/IIntake.sol";
+import {IIntake, IIntakeWithFailure} from "../../src/interfaces/IIntake.sol";
 import {Network} from "../../src/Network.sol";
 import {PoolKey} from "v4-core/src/types/PoolKey.sol";
 import {Currency} from "v4-core/src/types/Currency.sol";
@@ -51,7 +51,7 @@ contract MockToken is ERC20 {
     }
 }
 
-contract MockIntake is IIntake {
+contract MockIntake is IIntake, IIntakeWithFailure {
     uint256 public price;
     uint256 public nonce;
     bool public reject;
@@ -60,12 +60,14 @@ contract MockIntake is IIntake {
     bytes32 public lastAction;
     bytes public lastBody;
     Callback public lastCallback;
+    bytes4 public lastFailureSelector;
     uint256 public allowanceSeen;
     uint256 public paid;
     address public reenterTarget;
     bytes public reenterData;
     bool public reenterSucceeded;
     mapping(bytes32 => Callback) public callbacks;
+    mapping(bytes32 => bytes4) public failureSelectors;
 
     function setExhaustGas(bool value) external {
         exhaustGas = value;
@@ -96,6 +98,28 @@ contract MockIntake is IIntake {
         address asset,
         uint256 amount
     ) external payable returns (bytes32 id) {
+        return _request(action, body, callback, bytes4(0), asset, amount);
+    }
+
+    function requestWithFailure(
+        bytes32 action,
+        bytes calldata body,
+        Callback calldata callback,
+        bytes4 onFailure,
+        address asset,
+        uint256 amount
+    ) external payable returns (bytes32 id) {
+        return _request(action, body, callback, onFailure, asset, amount);
+    }
+
+    function _request(
+        bytes32 action,
+        bytes calldata body,
+        Callback calldata callback,
+        bytes4 onFailure,
+        address asset,
+        uint256 amount
+    ) private returns (bytes32 id) {
         if (exhaustGas) {
             assembly ("memory-safe") { invalid() }
         }
@@ -108,14 +132,26 @@ contract MockIntake is IIntake {
         lastAction = action;
         lastBody = body;
         lastCallback = callback;
+        lastFailureSelector = onFailure;
         id = keccak256(abi.encode(msg.sender, ++nonce));
         callbacks[id] = callback;
+        failureSelectors[id] = onFailure;
         if (reenterTarget != address(0)) (reenterSucceeded,) = reenterTarget.call(reenterData);
     }
 
     function deliver(bytes32 id, bytes calldata encodedArguments) external returns (bool ok) {
         Callback memory cb = callbacks[id];
         (ok,) = cb.target.call{gas: 200_000}(bytes.concat(cb.selector, encodedArguments));
+    }
+
+    /// @dev The writer's failure call: `onFailure ++ abi.encode(id, status, reason, 0, 0, "")`.
+    function fail(bytes32 id, uint8 status, bytes32 reason) external returns (bool ok) {
+        Callback memory cb = callbacks[id];
+        bytes4 selector = failureSelectors[id];
+        if (selector == bytes4(0)) return false;
+        (ok,) = cb.target.call{gas: 200_000}(
+            bytes.concat(selector, abi.encode(id, status, reason, uint16(0), uint16(0), bytes("")))
+        );
     }
 }
 

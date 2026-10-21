@@ -279,7 +279,9 @@ contract HolderRewardsTest is TestBase {
         assertEq(intake.paid(), PRICE);
     }
 
-    function testRetrySponsorPaysAndOldIdBecomesInvalid() public {
+    /// A sponsor's retry never invalidates the request the pot already paid for: whichever answer
+    /// arrives first installs the root, and the other is refused instead of overwriting it.
+    function testRetrySponsorPaysAndEarlierRequestStillAnswersExactlyOnce() public {
         deposit(100 ether + PRICE);
         bytes32 old = rewards.getEpoch(1).requestId;
         imd.mint(alice, PRICE);
@@ -291,11 +293,55 @@ contract HolderRewardsTest is TestBase {
         vm.warp(vm.getBlockTimestamp() + 1 days);
         vm.prank(alice);
         rewards.retryOracle(1);
-        assertEq(rewards.pending(old), 0);
+        bytes32 latest = rewards.getEpoch(1).requestId;
+        assertTrue(latest != old);
+        assertEq(rewards.pending(old), 1);
+        assertEq(rewards.pending(latest), 1);
         assertEq(rewards.getEpoch(1).pot, 100 ether);
         assertEq(imd.balanceOf(address(rewards)), 100 ether);
         assertEq(imd.balanceOf(alice), 0);
-        deliver(1, leaf(alice, 100 ether));
+        // The late answer to the first request is installed.
+        OracleAttestation.Attestation memory a = answer(1, leaf(alice, 100 ether));
+        bytes memory sig = signature(a);
+        assertTrue(intake.deliver(old, abi.encode(old, a, sig)));
+        assertEq(rewards.getEpoch(1).root, leaf(alice, 100 ether));
+        assertTrue(rewards.getEpoch(1).ready);
+        // The retry's answer cannot replace it, and a further retry is refused.
+        OracleAttestation.Attestation memory b = answer(1, leaf(bob, 100 ether));
+        b.requestId = keccak256("another oracle UUID");
+        bytes memory sigB = signature(b);
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(HolderRewards.AlreadyAnswered.selector);
+        rewards.onOracleResult(latest, b, sigB);
+        assertEq(rewards.getEpoch(1).root, leaf(alice, 100 ether));
+        vm.expectRevert(HolderRewards.NotReady.selector);
+        rewards.retryOracle(1);
+        vm.prank(alice);
+        rewards.claim(1, 100 ether, new bytes32[](0));
+        assertEq(imd.balanceOf(alice), 100 ether);
+    }
+
+    /// An epoch opened from rolled-over carry alone pays its oracle request from that carry.
+    function testCarryFundedEpochPaysItsOwnOracleRequest() public {
+        deposit(100 ether + PRICE);
+        vm.warp(vm.getBlockTimestamp() + 28 days);
+        rewards.rollover(1);
+        assertEq(rewards.getEpoch(2).carry, 100 ether);
+        vm.roll(vm.getBlockNumber() + 1);
+        uint256 paidBefore = intake.paid();
+        uint256 id = deposit(0);
+        assertEq(id, 3);
+        assertEq(intake.paid() - paidBefore, PRICE);
+        assertEq(rewards.getEpoch(3).pot, 100 ether - PRICE);
+        assertEq(rewards.getEpoch(3).snapshotPot, 100 ether - PRICE);
+        assertTrue(rewards.getEpoch(3).requestId != bytes32(0));
+        assertEq(rewards.getEpoch(2).pot, 0);
+        assertEq(rewards.totalReserved(), 100 ether - PRICE);
+        assertEq(imd.balanceOf(address(rewards)), 100 ether - PRICE);
+        deliver(3, leaf(alice, 100 ether - PRICE));
+        vm.prank(alice);
+        rewards.claim(3, 100 ether - PRICE, new bytes32[](0));
+        assertEq(imd.balanceOf(address(rewards)), 0);
     }
 
     /// forge-config: default.fuzz.runs = 256

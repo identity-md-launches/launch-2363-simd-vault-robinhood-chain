@@ -26,11 +26,7 @@ contract JobsVaultTest is TestBase {
         vm.prank(alice);
         vm.expectRevert(JobsVault.DailyLimit.selector);
         jobs.requestJob("{}");
-        // A second holder in the same block hits the vault-wide one-job-per-block limit.
-        vm.prank(bob);
-        vm.expectRevert(JobsVault.DailyLimit.selector);
-        jobs.requestJob("{}");
-        vm.roll(vm.getBlockNumber() + 1);
+        // A second eligible holder is served in the same block: the limit is per wallet only.
         vm.prank(bob);
         jobs.requestJob("{}");
         vm.roll(vm.getBlockNumber() + 1);
@@ -45,27 +41,52 @@ contract JobsVaultTest is TestBase {
         assertEq(imd.allowance(address(jobs), Network.INTAKE), 0);
     }
 
-    function testHoldingHoppedBetweenWalletsCannotDrainBudget() public {
+    /// The brief's rule is per wallet: no vault-wide cap can refuse an eligible holder's first
+    /// request of the day, however many other wallets asked before it. One bag moved through fresh
+    /// wallets is served at each of them; that is the spot-balance rule the brief specifies.
+    function testNoVaultWideCapStarvesAnEligibleHolder() public {
         bind();
         imd.mint(address(jobs), 100 ether);
-        uint256 opened;
-        for (uint256 i; i < 50; ++i) {
-            address wallet = address(uint160(0x5000 + i));
-            token.mint(wallet, 1_000_000 ether);
-            vm.prank(wallet);
-            try jobs.requestJob("{}") {
-                ++opened;
-            } catch {}
-            // Same block for the first ten wallets, then one block each.
-            if (i >= 9) vm.roll(vm.getBlockNumber() + 1);
+        address holder = makeAddr("holder");
+        token.mint(holder, 1_000_000 ether);
+        address squatter = makeAddr("squatter");
+        token.mint(squatter, 1_000_000 ether);
+        address current = squatter;
+        for (uint256 i; i < 30; ++i) {
+            address next = address(uint160(0x5000 + i));
+            vm.prank(current);
+            token.transfer(next, 1_000_000 ether);
+            current = next;
+            vm.prank(current);
+            jobs.requestJob("{}");
+            vm.roll(vm.getBlockNumber() + 1);
+            vm.warp(vm.getBlockTimestamp() + 12);
         }
-        assertEq(opened, 1 + jobs.MAX_JOBS_PER_DAY() - 1);
-        assertEq(imd.balanceOf(address(jobs)), 100 ether - jobs.MAX_JOBS_PER_DAY() * PRICE);
-        vm.warp(vm.getBlockTimestamp() + 1 days);
-        vm.prank(address(0xFEED));
-        token.mint(address(0xFEED), 1_000_000 ether);
-        vm.prank(address(0xFEED));
+        assertEq(imd.balanceOf(address(jobs)), 100 ether - 30 * PRICE);
+        assertEq(jobs.nextRequestAt(holder), 0);
+        vm.prank(holder);
         jobs.requestJob("{}");
+        assertEq(jobs.nextRequestAt(holder), vm.getBlockTimestamp() + 1 days);
+        // The wallet that holds the bag now is on cooldown; the wallet that handed it on is too.
+        vm.prank(current);
+        vm.expectRevert(JobsVault.DailyLimit.selector);
+        jobs.requestJob("{}");
+        vm.prank(squatter);
+        vm.expectRevert(JobsVault.InsufficientHolding.selector);
+        jobs.requestJob("{}");
+    }
+
+    function testNoVaultWideSelectorsExist() public {
+        bind();
+        bytes4[3] memory selectors = [
+            bytes4(keccak256("MAX_JOBS_PER_DAY()")),
+            bytes4(keccak256("jobsInPeriod()")),
+            bytes4(keccak256("lastJobBlock()"))
+        ];
+        for (uint256 i; i < selectors.length; ++i) {
+            (bool ok,) = address(jobs).call(abi.encodeWithSelector(selectors[i]));
+            assertFalse(ok);
+        }
     }
 
     function testNotConfiguredAndSetTokenOnlyVaultOnce() public {

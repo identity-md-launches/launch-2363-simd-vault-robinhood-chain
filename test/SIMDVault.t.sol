@@ -19,12 +19,66 @@ contract SIMDVaultTest is TestBase {
         assertEq(intake.allowanceSeen(), PRICE);
         assertEq(imd.allowance(address(vault), Network.INTAKE), 0);
         assertEq(imd.balanceOf(address(vault)), 2 ether - PRICE);
+        // No value moves on either call back: the result is a record, the failure reopens the ask.
         (address target, bytes4 selector) = intake.lastCallback();
-        assertEq(target, address(0));
-        assertEq(selector, bytes4(0));
+        assertEq(target, address(vault));
+        assertEq(selector, vault.onLaunchResult.selector);
+        assertEq(intake.lastFailureSelector(), vault.onLaunchFailure.selector);
         vm.prank(Network.DEV);
         vm.expectRevert(SIMDVault.AlreadyLaunched.selector);
         vault.launch("{}");
+    }
+
+    function testRefusedLaunchReopensTheOneTimeCallAndOnlyIntakeForTheOwnRequest() public {
+        imd.mint(address(vault), 3 * PRICE);
+        vm.prank(Network.DEV);
+        bytes32 first = vault.launch("{\"objective\":\"Test\"}");
+        // Only the Intake, and only for the vault's own pending request.
+        vm.expectRevert(SIMDVault.OnlyIntake.selector);
+        vault.onLaunchFailure(first, 1, bytes32("body_refused"), 0, 0, "");
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(SIMDVault.UnknownRequest.selector);
+        vault.onLaunchFailure(bytes32(uint256(1)), 1, bytes32("body_refused"), 0, 0, "");
+        assertTrue(vault.launched());
+        // The plane refuses the body off chain: the price is spent and the call reopens.
+        assertTrue(intake.fail(first, 1, bytes32("body_refused")), "failure call must fit the stipend");
+        assertFalse(vault.launched());
+        assertEq(vault.launchRequestId(), bytes32(0));
+        assertEq(imd.balanceOf(address(vault)), 2 * PRICE);
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(SIMDVault.UnknownRequest.selector);
+        vault.onLaunchFailure(first, 1, bytes32("body_refused"), 0, 0, "");
+        vm.prank(Network.DEV);
+        bytes32 second = vault.launch("{\"objective\":\"Test again\"}");
+        assertTrue(second != first);
+        // A late result for the first ask is refused; the second ask's result is recorded once.
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(SIMDVault.UnknownRequest.selector);
+        vault.onLaunchResult(first, keccak256("old"), "ipfs://old");
+        assertTrue(intake.deliver(second, abi.encode(second, keccak256("result"), "ipfs://cid/result.json")));
+        assertEq(vault.launchResultHash(), keccak256("result"));
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(SIMDVault.UnknownRequest.selector);
+        vault.onLaunchResult(second, keccak256("other"), "ipfs://other");
+        // A failure after a result, or after binding, cannot reopen the launch.
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(SIMDVault.UnknownRequest.selector);
+        vault.onLaunchFailure(second, 2, bytes32("failed"), 0, 0, "");
+        assertTrue(vault.launched());
+        vm.prank(Network.DEV);
+        vm.expectRevert(SIMDVault.AlreadyLaunched.selector);
+        vault.launch("{}");
+    }
+
+    function testBoundLaunchCannotBeReopenedByALateFailure() public {
+        imd.mint(address(vault), PRICE);
+        vm.prank(Network.DEV);
+        bytes32 id = vault.launch("{\"objective\":\"Test\"}");
+        bind();
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(SIMDVault.UnknownRequest.selector);
+        vault.onLaunchFailure(id, 2, bytes32("cancelled"), 0, 0, "");
+        assertTrue(vault.launched());
     }
 
     function testRejectedLaunchCanRetryAndUnsoldCannotLaunch() public {

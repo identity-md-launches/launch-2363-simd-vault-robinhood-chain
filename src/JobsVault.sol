@@ -8,6 +8,12 @@ import {VaultChild} from "./VaultChild.sol";
 import {Network} from "./Network.sol";
 import {IIntake} from "./interfaces/IIntake.sol";
 
+/// @notice Pays Identity.md jobs for holders: any wallet holding at least 1,000,000 of the launched
+/// token may open one job per 24 hours, paid from this vault's IMD. Exactly the brief's rule and
+/// nothing vault-wide: a vault-wide cap can be filled by one holder moving a bag through fresh
+/// wallets and then refuses every other eligible holder, so the per-wallet rule is the only limit.
+/// The eligibility check is a spot balance; the same tokens moved between wallets can open more than
+/// one job per day. That is a property of the requested rule and is documented in the README.
 contract JobsVault is VaultChild {
     using SafeERC20 for IERC20;
 
@@ -17,12 +23,6 @@ contract JobsVault is VaultChild {
     error InvalidBody();
 
     uint256 public constant COOLDOWN = 1 days;
-    /// @notice Vault-wide limits: a holding moved between wallets still opens at most one job per
-    /// block and the whole vault opens at most MAX_JOBS_PER_DAY jobs per 24-hour period.
-    uint256 public constant MAX_JOBS_PER_DAY = 24;
-    uint256 public lastJobBlock;
-    uint256 public periodStart;
-    uint256 public jobsInPeriod;
     uint256 public minimumHolding;
     mapping(address => uint256) public nextRequestAt;
 
@@ -44,14 +44,6 @@ contract JobsVault is VaultChild {
         if (body.length == 0 || body.length > 16_384) revert InvalidBody();
         uint256 price = IIntake(Network.INTAKE).priceOf(Network.JOB_ACTION, Network.IMD);
         if (price == 0) revert ActionNotSold();
-        if (lastJobBlock == block.number) revert DailyLimit();
-        if (block.timestamp >= periodStart + COOLDOWN) {
-            periodStart = block.timestamp;
-            jobsInPeriod = 0;
-        }
-        if (jobsInPeriod >= MAX_JOBS_PER_DAY) revert DailyLimit();
-        ++jobsInPeriod;
-        lastJobBlock = block.number;
         nextRequestAt[msg.sender] = block.timestamp + COOLDOWN;
         IERC20(Network.IMD).forceApprove(Network.INTAKE, price);
         requestId = IIntake(Network.INTAKE)

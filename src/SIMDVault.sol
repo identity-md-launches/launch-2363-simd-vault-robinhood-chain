@@ -7,7 +7,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {PoolKey} from "v4-core/src/types/PoolKey.sol";
 import {Network} from "./Network.sol";
-import {IIntake} from "./interfaces/IIntake.sol";
+import {IIntake, IIntakeWithFailure} from "./interfaces/IIntake.sol";
 import {ILaunchFactory} from "./interfaces/ILaunchFactory.sol";
 import {HolderRewards} from "./HolderRewards.sol";
 import {JobsVault} from "./JobsVault.sol";
@@ -25,6 +25,8 @@ contract SIMDVault is ReentrancyGuard {
     error TooEarly();
     error InvalidBody();
     error ActionNotSold();
+    error OnlyIntake();
+    error UnknownRequest();
 
     HolderRewards public immutable holderRewards;
     JobsVault public immutable jobsVault;
@@ -42,8 +44,11 @@ contract SIMDVault is ReentrancyGuard {
     bool public bound;
     uint256 public nextDistributionAt;
     bytes32 public launchRequestId;
+    bytes32 public launchResultHash;
 
     event LaunchRequested(bytes32 indexed requestId, uint256 price);
+    event LaunchCompleted(bytes32 indexed requestId, bytes32 resultHash, string uri);
+    event LaunchFailed(bytes32 indexed requestId, uint8 status, bytes32 reason);
     event LaunchBound(uint64 indexed launchNumber, address indexed token);
     event FeeClaimFailed(uint64 indexed launchNumber);
     event Distributed(
@@ -69,6 +74,13 @@ contract SIMDVault is ReentrancyGuard {
         _;
     }
 
+    /// @notice Pays for the Test launch once. The vault is the Intake's payer, so the factory records
+    /// it as the launch's requester and pays it the creator fees for good.
+    /// @dev The plane can still refuse the body off chain (status 1) or end the launch without a
+    /// result (status 2); the price is spent either way and nothing is refunded. Intake version 2
+    /// reports that through the failure function named here, which reopens the one-time call so the
+    /// vault is not left unbindable with its IMD locked. A result only records the plane's hash and
+    /// URI; nothing moves on either call.
     function launch(bytes calldata body) external onlyDev nonReentrant returns (bytes32 requestId) {
         if (launched) revert AlreadyLaunched();
         if (body.length == 0 || body.length > 16_384) revert InvalidBody();
@@ -76,11 +88,43 @@ contract SIMDVault is ReentrancyGuard {
         if (price == 0) revert ActionNotSold();
         launched = true;
         IERC20(IMD).forceApprove(INTAKE, price);
-        requestId = IIntake(INTAKE)
-            .request(Network.LAUNCH_ACTION, body, IIntake.Callback(address(0), bytes4(0)), IMD, price);
+        requestId = IIntakeWithFailure(INTAKE)
+            .requestWithFailure(
+                Network.LAUNCH_ACTION,
+                body,
+                IIntake.Callback(address(this), this.onLaunchResult.selector),
+                this.onLaunchFailure.selector,
+                IMD,
+                price
+            );
         IERC20(IMD).forceApprove(INTAKE, 0);
+        if (requestId == bytes32(0)) revert UnknownRequest();
         launchRequestId = requestId;
         emit LaunchRequested(requestId, price);
+    }
+
+    /// @notice The plane's result for the launch ask: a record only, under the 200 000 gas stipend.
+    function onLaunchResult(bytes32 requestId, bytes32 resultHash, string calldata uri) external {
+        if (msg.sender != INTAKE) revert OnlyIntake();
+        if (!launched || requestId != launchRequestId || launchResultHash != bytes32(0)) {
+            revert UnknownRequest();
+        }
+        launchResultHash = resultHash;
+        emit LaunchCompleted(requestId, resultHash, uri);
+    }
+
+    /// @notice The plane refused the launch ask or it ended without a result: no launch has this
+    /// vault as requester, so the dev may pay for another. Unsigned, so nothing else moves on it.
+    function onLaunchFailure(bytes32 requestId, uint8 status, bytes32 reason, uint16, uint16, bytes calldata)
+        external
+    {
+        if (msg.sender != INTAKE) revert OnlyIntake();
+        if (!launched || bound || requestId != launchRequestId || launchResultHash != bytes32(0)) {
+            revert UnknownRequest();
+        }
+        launched = false;
+        launchRequestId = bytes32(0);
+        emit LaunchFailed(requestId, status, reason);
     }
 
     function bindLaunch(uint64 number, address token_) external onlyDev nonReentrant {

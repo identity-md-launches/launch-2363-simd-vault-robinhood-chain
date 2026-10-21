@@ -88,9 +88,12 @@ contract CompensationVault is VaultChild, IUnlockCallback {
     /// @notice Spend at most floor(initial balance / 10), at most ten times, ten minutes apart.
     /// @dev Every swap is bounded to PRICE_BAND_BPS (in sqrt price) around a reference price that was
     /// recorded at an earlier timestamp, so a caller cannot move the price and trigger a tranche in
-    /// the same transaction. A price outside that band only re-records the reference; the tranche
-    /// runs on a later call. A partial fill at the band counts as a tranche; a swap that buys
-    /// nothing ends the buyback. After BUYBACK_WINDOW anyone can end it so the airdrop always opens.
+    /// the same transaction. A price outside that band swaps nothing and, at most once per
+    /// TRANCHE_INTERVAL, moves the reference one band step towards the pool price: whoever wants a
+    /// tranche to fill at a pushed price must hold that price against arbitrage for ten minutes per
+    /// 1.5% step. The tranche runs on a later call. A partial fill at the band counts as a tranche;
+    /// a swap that buys nothing ends the buyback. After BUYBACK_WINDOW anyone can end it so the
+    /// airdrop always opens.
     function buyback() external nonReentrant {
         if (token == address(0)) revert NotConfigured();
         if (buybackComplete) revert BuybackFinished();
@@ -118,7 +121,8 @@ contract CompensationVault is VaultChild, IUnlockCallback {
         (uint160 price,,,) = IPoolManager(Network.POOL_MANAGER).getSlot0(poolKey.toId());
         (uint160 lower, uint160 upper) = priceBand();
         if (price <= lower || price >= upper) {
-            _recordReference(price);
+            if (block.timestamp < referenceSetAt + TRANCHE_INTERVAL) revert TooEarly();
+            _recordReference(price <= lower ? lower : upper);
             return;
         }
         uint256 beforeTokens = IERC20(token).balanceOf(address(this));

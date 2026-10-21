@@ -51,6 +51,7 @@ contract HolderRewards is VaultChild, OracleAttestationConsumer {
     error OnlyIntake();
     error UnknownRequest();
     error InvalidAnswer();
+    error AlreadyAnswered();
     error InsufficientDeposit();
     error BlockNumberUnavailable();
 
@@ -100,17 +101,18 @@ contract HolderRewards is VaultChild, OracleAttestationConsumer {
         uint256 id = _openEpoch(amount + carry);
         totalReserved += amount;
         // This isolated self-call rolls back fee/accounting/approval together on any Intake error.
-        // A weekly deposit too small to buy an answer never spends another epoch's reserve.
-        try this.requestDepositedEpoch{gas: ORACLE_REQUEST_GAS_LIMIT}(id, amount) {}
+        // The request is paid from this epoch's own pot: the new deposit plus the carry that just
+        // moved into it. It never spends another open epoch's reserve.
+        try this.requestDepositedEpoch{gas: ORACLE_REQUEST_GAS_LIMIT}(id, amount + carry) {}
         catch {
             emit OracleDeferred(id);
         }
     }
 
-    function requestDepositedEpoch(uint256 id, uint256 deposit) external {
+    function requestDepositedEpoch(uint256 id, uint256 budget) external {
         if (msg.sender != address(this)) revert OnlySelf();
         uint256 price = IIntake(Network.INTAKE).priceOf(Network.ORACLE_ACTION, Network.IMD);
-        if (price == 0 || price >= deposit) revert InsufficientDeposit();
+        if (price == 0 || price >= budget) revert InsufficientDeposit();
         Epoch storage e = epochs[id];
         e.pot -= price;
         e.snapshotPot -= price;
@@ -119,7 +121,9 @@ contract HolderRewards is VaultChild, OracleAttestationConsumer {
     }
 
     /// @notice Anyone can sponsor another attempt; retries never consume reward pots.
-    /// @dev Uses the same deposit block and payout budget. Invalidates the earlier intake ID.
+    /// @dev Uses the same deposit block and payout budget, so every request of an epoch asks the
+    /// same question. Earlier requests stay valid: the first answer delivered installs the root and
+    /// later ones are refused, so a sponsor can never invalidate an answer the pot already paid for.
     function retryOracle(uint256 id) external nonReentrant {
         Epoch storage e = epochs[id];
         _requireOpen(id);
@@ -128,7 +132,6 @@ contract HolderRewards is VaultChild, OracleAttestationConsumer {
         uint256 price = IIntake(Network.INTAKE).priceOf(Network.ORACLE_ACTION, Network.IMD);
         if (price == 0) revert InsufficientDeposit();
         IERC20(Network.IMD).safeTransferFrom(msg.sender, address(this), price);
-        delete pending[e.requestId];
         _ask(id, price);
     }
 
@@ -142,6 +145,7 @@ contract HolderRewards is VaultChild, OracleAttestationConsumer {
         if (id == 0) revert UnknownRequest();
         _requireOpen(id);
         Epoch storage e = epochs[id];
+        if (e.ready) revert AlreadyAnswered();
         if (
             a.questionHash != e.questionHash || a.chainId != block.chainid || a.fromBlock != e.snapshotBlock
                 || a.toBlock != e.snapshotBlock || a.panelSize < PANEL_SIZE || a.quorum < QUORUM
@@ -186,6 +190,7 @@ contract HolderRewards is VaultChild, OracleAttestationConsumer {
         uint256 remaining = e.pot - e.claimed;
         e.closed = true;
         e.carry = 0;
+        // Any other request id of this epoch still maps to it and is refused as closed.
         delete pending[e.requestId];
         if (id == currentEpoch) _openEpoch(0);
         Epoch storage destination = epochs[currentEpoch];
