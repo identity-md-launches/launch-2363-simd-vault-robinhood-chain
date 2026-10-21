@@ -39,7 +39,7 @@ contract MockToken is ERC20 {
         reenterData = data;
     }
 
-    function transfer(address to, uint256 value) public override returns (bool) {
+    function transfer(address to, uint256 value) public virtual override returns (bool) {
         require(!rejectTransfers, "transfer rejected");
         if (reenterTarget != address(0)) (reenterSucceeded,) = reenterTarget.call(reenterData);
         return super.transfer(to, value);

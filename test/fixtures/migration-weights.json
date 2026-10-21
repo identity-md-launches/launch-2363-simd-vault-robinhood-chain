@@ -1,0 +1,250 @@
+[
+  {
+    "account": "0x047f606fd5b2baa5f5c6c4ab8958e45cb6b054b7",
+    "weight": "3272315912286690225197429"
+  },
+  {
+    "account": "0x048ddd3345061e4861136336f7aa9f28c0ae9339",
+    "weight": "222928024971542254248088"
+  },
+  {
+    "account": "0x09cd21b9f64a204b8a9ee180bc85c826131c8c6f",
+    "weight": "1997418304113360249230167"
+  },
+  {
+    "account": "0x09eb5b2da87da9a3f4a2ba1bd2cb5e863a2f782c",
+    "weight": "6157481011779444506741292"
+  },
+  {
+    "account": "0x0b8be030a1d151b1fa722a794eeab43a45b1e002",
+    "weight": "458624464393878930154259"
+  },
+  {
+    "account": "0x0e661fe9ecd6af4fe91e302dae44ffc0dd220588",
+    "weight": "28712477994265079832271"
+  },
+  {
+    "account": "0x131df527ca4e83013cb24da2c3d3c6810635a980",
+    "weight": "141965712444526269389099"
+  },
+  {
+    "account": "0x1592964e6a855c83c3a41281fe834aceea1b7a0b",
+    "weight": "781225652166092580017191"
+  },
+  {
+    "account": "0x164087e2965d8844d0ffa6a171f9d9e01fc3a914",
+    "weight": "3123386274721457795962186"
+  },
+  {
+    "account": "0x1c1c1538f375eef2ef73abaa54c2af884ca6bb9d",
+    "weight": "71116032602339374679300"
+  },
+  {
+    "account": "0x1c935414ae2301c7f1bef76951493c4ad8b3b11b",
+    "weight": "1611701753496943139129704"
+  },
+  {
+    "account": "0x1d7e454ab11603667c211b065246062c95da81d8",
+    "weight": "1737538325093453620017261"
+  },
+  {
+    "account": "0x2237c6d2d6486291f43645dfccebda85f56018e1",
+    "weight": "76165463097759176767338"
+  },
+  {
+    "account": "0x25b95684adef6aa980e5dcaa23762ae1b80261d3",
+    "weight": "2741880479041531138449446"
+  },
+  {
+    "account": "0x28f1dd1c0322ab37fc92445c80cde829ad69a2ad",
+    "weight": "47692666727975688359358"
+  },
+  {
+    "account": "0x29168e41cee30432994a4592dbfbf58528ad396c",
+    "weight": "633488392900074212659358"
+  },
+  {
+    "account": "0x2c44586dd63e5b70be47f20e7c83b1c2d45c3100",
+    "weight": "700976865025705940394290"
+  },
+  {
+    "account": "0x3126b0605e601dabb87afa9948ba5688f3ff479c",
+    "weight": "6424442856913931049275655"
+  },
+  {
+    "account": "0x3588afdb817c0c87d5d6189bf1a98a63477be818",
+    "weight": "410255231959416620536302"
+  },
+  {
+    "account": "0x364a021d0f8ba073d69b62682e09daf838153581",
+    "weight": "307203783700853233589451"
+  },
+  {
+    "account": "0x3fdace8a3f868859a7d1098555f7220cb456491d",
+    "weight": "1166106471651988692217287"
+  },
+  {
+    "account": "0x4d358fd566bdf290ab965f6e8b5b129036a85b8e",
+    "weight": "3731187198061944932047061"
+  },
+  {
+    "account": "0x5006d8d4e3e96c445882327921151190f7b34a7c",
+    "weight": "2198556940711600413141105"
+  },
+  {
+    "account": "0x5473aad654fcdb16d87f4cb2edeb43272db5b03e",
+    "weight": "182751504291602307538655"
+  },
+  {
+    "account": "0x56212c1802b2be6f2e8331a2234f3cf48e264ac2",
+    "weight": "573384425902784285054662"
+  },
+  {
+    "account": "0x5b85a75be7708d048eac178d22a68244f18232ad",
+    "weight": "1941856832082347941447153"
+  },
+  {
+    "account": "0x5def181184f761baf692c2736f7102d757aa91b5",
+    "weight": "4522659382947478635157007"
+  },
+  {
+    "account": "0x6306160b3faf350efa93181acf8321af5af6ffe9",
+    "weight": "434988192499936311657384"
+  },
+  {
+    "account": "0x66822079aabcef7f252b01abeabb95ced96feb09",
+    "weight": "4147820579260714636559392"
+  },
+  {
+    "account": "0x71d6be89af83e77c76e834ec0874571ae1856e32",
+    "weight": "260845325655038800482391"
+  },
+  {
+    "account": "0x76416fe0a4d3aeeef4a63fd99f6c2df7547fc0bf",
+    "weight": "353316117116400540167149"
+  },
+  {
+    "account": "0x78850111bfa033ff326c85ba0b779bad173e3422",
+    "weight": "3428088656046084874308212"
+  },
+  {
+    "account": "0x88a652ed8fd3ca27ff2cada4bd1ba027a3a84d05",
+    "weight": "426586902195829660057329"
+  },
+  {
+    "account": "0x8daa4f26132e99f0512a8154f019c8ff7fd6269c",
+    "weight": "3504804636708205007268664"
+  },
+  {
+    "account": "0x8ffbfb246c2bee6454dae681297af47de99a6b78",
+    "weight": "1001552628227030023030031"
+  },
+  {
+    "account": "0x967e23886af9781581f55a0f4c0ed2d419fa42e9",
+    "weight": "1294340429885738748140203"
+  },
+  {
+    "account": "0x98717ded2da8fd9a239337bd9da0ef0a7273a28e",
+    "weight": "1183719699616220196558960"
+  },
+  {
+    "account": "0x9a893b750ce7c1644a0f42f118530d1e64d4271e",
+    "weight": "762584961803443539420709"
+  },
+  {
+    "account": "0x9f2c2846b5edeeb0f46affd6d86161a053bbd985",
+    "weight": "6558837300000000000000"
+  },
+  {
+    "account": "0xa0d7b5cb0f57afe5a3746607a2d60ce9c2cfde5f",
+    "weight": "3128235433628207312273968"
+  },
+  {
+    "account": "0xa1d2386dd5381b887dbb4fb13283eb9f21f92a0a",
+    "weight": "2332812160252293599898261"
+  },
+  {
+    "account": "0xa58501a5d61ecf45ea5d39943458010f90d60999",
+    "weight": "3105863800368656736067020"
+  },
+  {
+    "account": "0xabe0cdd036456fcc1b64d1ddb7aa3bdf7d5b98b1",
+    "weight": "38495179714623416822390747"
+  },
+  {
+    "account": "0xac890534a98da81b4f7bea5cb78612c656667c71",
+    "weight": "31612013981011697815350085"
+  },
+  {
+    "account": "0xaea8c6444a5e4efd738a6ec51f3d0ed0928c110b",
+    "weight": "23000000000000000000000000"
+  },
+  {
+    "account": "0xaeb09ed3407a354f1a63e82953a26fe8f2fcc261",
+    "weight": "40450095534186922603613"
+  },
+  {
+    "account": "0xb430bd296a80c320dff844ac0936cdb8f50444fb",
+    "weight": "1190296647801720970560241"
+  },
+  {
+    "account": "0xb4659f80952dfdf15ffb378f4c6a9065ac399ca7",
+    "weight": "32341441646500536784512"
+  },
+  {
+    "account": "0xc0adefef84aea2ca08a125abea147d109d1d21c9",
+    "weight": "33887573543360998963784"
+  },
+  {
+    "account": "0xca1a6e5fe34293775fe0dd109d74539b567eec34",
+    "weight": "21104167927584461146411"
+  },
+  {
+    "account": "0xcc242e943cb785794f93acaa835307fabae84bd4",
+    "weight": "1009146423643251899408052"
+  },
+  {
+    "account": "0xd00db8fc3aae1d22245904f55a0d9fb389aa3ff9",
+    "weight": "37078447914301212175876"
+  },
+  {
+    "account": "0xd41fcbb0e58cbeae68b151e07bd8f991afc5e1af",
+    "weight": "1193974833054712373204164"
+  },
+  {
+    "account": "0xdd0c9e144197502537cef07eb7b7cb787c9d05ec",
+    "weight": "1444280580000000000000000"
+  },
+  {
+    "account": "0xe389a59507e29ba2e5e4d546223597b4e91042ee",
+    "weight": "11712988478524940722168428"
+  },
+  {
+    "account": "0xea744fa6be19ff8b2a9f61c828021885a8a5c7d9",
+    "weight": "71753636172726818687793"
+  },
+  {
+    "account": "0xeafcb3d7128c81a948f9784529168127a7392d25",
+    "weight": "9446762935195386752147946"
+  },
+  {
+    "account": "0xeb4b8ca748bc9109d145e4675d38ba67d715a466",
+    "weight": "268637510863744902138361"
+  },
+  {
+    "account": "0xee2aaa315cf7ed169f93148d30d24af9318dbb66",
+    "weight": "281033233393587611043740"
+  },
+  {
+    "account": "0xef86c6a333f25cf04ab6c767b9259fd5ea971f6b",
+    "weight": "1139448519307229403682419"
+  },
+  {
+    "account": "0xf27af179f78bdb5f5377f709d5b2b438c2cb6694",
+    "weight": "7822050750371413829981088"
+  },
+  {
+    "account": "0xfbc0b98978cf817377bfa9e44a4d2bd2d614cf43",
+    "weight": "1597111000000000000000000"
+  }
+]

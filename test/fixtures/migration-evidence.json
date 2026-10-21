@@ -1,0 +1,857 @@
+{
+  "chainId": 1,
+  "token": "0xbb0c1f82a2ea0253ea3d91c2f05caded82133415",
+  "snapshotBlock": 26213125,
+  "snapshotBlockHash": "0xa63fad2afaac9b6ba4ce4a195fff650e8d3ae729c6cfebf34b32f72034a9b892",
+  "lastTransferBlock": 26214111,
+  "lastTransferBlockHash": "0xc71309cfe1f1154bc08b192880b5812f7674845fc1c9503cc454ce4d8f792e0f",
+  "accounts": [
+    {
+      "account": "0x047f606fd5b2baa5f5c6c4ab8958e45cb6b054b7",
+      "sent": "3272315912286690225197429",
+      "snapshotBalance": "3272315912286690225197429",
+      "weight": "3272315912286690225197429"
+    },
+    {
+      "account": "0x048ddd3345061e4861136336f7aa9f28c0ae9339",
+      "sent": "222928024971542254248088",
+      "snapshotBalance": "222928024971542254248088",
+      "weight": "222928024971542254248088"
+    },
+    {
+      "account": "0x09cd21b9f64a204b8a9ee180bc85c826131c8c6f",
+      "sent": "1997418304113360249230167",
+      "snapshotBalance": "1997418304113360249230167",
+      "weight": "1997418304113360249230167"
+    },
+    {
+      "account": "0x09eb5b2da87da9a3f4a2ba1bd2cb5e863a2f782c",
+      "sent": "6157481011779444506741292",
+      "snapshotBalance": "6157481011779444506741292",
+      "weight": "6157481011779444506741292"
+    },
+    {
+      "account": "0x0b8be030a1d151b1fa722a794eeab43a45b1e002",
+      "sent": "458624464393878930154259",
+      "snapshotBalance": "458624464393878930154259",
+      "weight": "458624464393878930154259"
+    },
+    {
+      "account": "0x0e661fe9ecd6af4fe91e302dae44ffc0dd220588",
+      "sent": "28712477994265079832271",
+      "snapshotBalance": "28712477994265079832271",
+      "weight": "28712477994265079832271"
+    },
+    {
+      "account": "0x131df527ca4e83013cb24da2c3d3c6810635a980",
+      "sent": "141965712444526269389099",
+      "snapshotBalance": "141965712444526269389099",
+      "weight": "141965712444526269389099"
+    },
+    {
+      "account": "0x1592964e6a855c83c3a41281fe834aceea1b7a0b",
+      "sent": "781225652166092580017191",
+      "snapshotBalance": "781225652166092580017191",
+      "weight": "781225652166092580017191"
+    },
+    {
+      "account": "0x164087e2965d8844d0ffa6a171f9d9e01fc3a914",
+      "sent": "3123386274721457795962186",
+      "snapshotBalance": "3123386274721457795962186",
+      "weight": "3123386274721457795962186"
+    },
+    {
+      "account": "0x1c1c1538f375eef2ef73abaa54c2af884ca6bb9d",
+      "sent": "71116032602339374679300",
+      "snapshotBalance": "71116032602339374679300",
+      "weight": "71116032602339374679300"
+    },
+    {
+      "account": "0x1c935414ae2301c7f1bef76951493c4ad8b3b11b",
+      "sent": "1611701753496943139129704",
+      "snapshotBalance": "1611701753496943139129704",
+      "weight": "1611701753496943139129704"
+    },
+    {
+      "account": "0x1d7e454ab11603667c211b065246062c95da81d8",
+      "sent": "1737538325093453620017261",
+      "snapshotBalance": "1737538325093453620017261",
+      "weight": "1737538325093453620017261"
+    },
+    {
+      "account": "0x2237c6d2d6486291f43645dfccebda85f56018e1",
+      "sent": "76165463097759176767338",
+      "snapshotBalance": "76165463097759176767338",
+      "weight": "76165463097759176767338"
+    },
+    {
+      "account": "0x25b95684adef6aa980e5dcaa23762ae1b80261d3",
+      "sent": "2741880479041531138449446",
+      "snapshotBalance": "2741880479041531138449446",
+      "weight": "2741880479041531138449446"
+    },
+    {
+      "account": "0x28f1dd1c0322ab37fc92445c80cde829ad69a2ad",
+      "sent": "47692666727975688359358",
+      "snapshotBalance": "47692666727975688359358",
+      "weight": "47692666727975688359358"
+    },
+    {
+      "account": "0x29168e41cee30432994a4592dbfbf58528ad396c",
+      "sent": "633488392900074212659358",
+      "snapshotBalance": "633488392900074212659358",
+      "weight": "633488392900074212659358"
+    },
+    {
+      "account": "0x2c44586dd63e5b70be47f20e7c83b1c2d45c3100",
+      "sent": "700976865025705940394290",
+      "snapshotBalance": "700976865025705940394290",
+      "weight": "700976865025705940394290"
+    },
+    {
+      "account": "0x3126b0605e601dabb87afa9948ba5688f3ff479c",
+      "sent": "6424442856913931049275655",
+      "snapshotBalance": "6424442856913931049275655",
+      "weight": "6424442856913931049275655"
+    },
+    {
+      "account": "0x3588afdb817c0c87d5d6189bf1a98a63477be818",
+      "sent": "410255231959416620536302",
+      "snapshotBalance": "410255231959416620536302",
+      "weight": "410255231959416620536302"
+    },
+    {
+      "account": "0x364a021d0f8ba073d69b62682e09daf838153581",
+      "sent": "307203783700853233589451",
+      "snapshotBalance": "307203783700853233589451",
+      "weight": "307203783700853233589451"
+    },
+    {
+      "account": "0x3fdace8a3f868859a7d1098555f7220cb456491d",
+      "sent": "1166106471651988692217287",
+      "snapshotBalance": "1166106471651988692217287",
+      "weight": "1166106471651988692217287"
+    },
+    {
+      "account": "0x4d358fd566bdf290ab965f6e8b5b129036a85b8e",
+      "sent": "3731187198061944932047061",
+      "snapshotBalance": "3742058262056419639621613",
+      "weight": "3731187198061944932047061"
+    },
+    {
+      "account": "0x5006d8d4e3e96c445882327921151190f7b34a7c",
+      "sent": "2198556940711600413141105",
+      "snapshotBalance": "2198556940711600413141105",
+      "weight": "2198556940711600413141105"
+    },
+    {
+      "account": "0x5473aad654fcdb16d87f4cb2edeb43272db5b03e",
+      "sent": "182751504291602307538655",
+      "snapshotBalance": "182751504291602307538655",
+      "weight": "182751504291602307538655"
+    },
+    {
+      "account": "0x56212c1802b2be6f2e8331a2234f3cf48e264ac2",
+      "sent": "573384425902784285054662",
+      "snapshotBalance": "573384425902784285054662",
+      "weight": "573384425902784285054662"
+    },
+    {
+      "account": "0x5b85a75be7708d048eac178d22a68244f18232ad",
+      "sent": "1941856832082347941447153",
+      "snapshotBalance": "1941856832082347941447153",
+      "weight": "1941856832082347941447153"
+    },
+    {
+      "account": "0x5def181184f761baf692c2736f7102d757aa91b5",
+      "sent": "4522659382947478635157007",
+      "snapshotBalance": "4522659382947478635157007",
+      "weight": "4522659382947478635157007"
+    },
+    {
+      "account": "0x6306160b3faf350efa93181acf8321af5af6ffe9",
+      "sent": "434988192499936311657384",
+      "snapshotBalance": "434988192499936311657384",
+      "weight": "434988192499936311657384"
+    },
+    {
+      "account": "0x66822079aabcef7f252b01abeabb95ced96feb09",
+      "sent": "4147820579260714636559392",
+      "snapshotBalance": "4147820579260714636559392",
+      "weight": "4147820579260714636559392"
+    },
+    {
+      "account": "0x71d6be89af83e77c76e834ec0874571ae1856e32",
+      "sent": "260845325655038800482391",
+      "snapshotBalance": "260845325655038800482391",
+      "weight": "260845325655038800482391"
+    },
+    {
+      "account": "0x76416fe0a4d3aeeef4a63fd99f6c2df7547fc0bf",
+      "sent": "353316117116400540167149",
+      "snapshotBalance": "353316117116400540167149",
+      "weight": "353316117116400540167149"
+    },
+    {
+      "account": "0x78850111bfa033ff326c85ba0b779bad173e3422",
+      "sent": "3428088656046084874308212",
+      "snapshotBalance": "3428088656046084874308212",
+      "weight": "3428088656046084874308212"
+    },
+    {
+      "account": "0x7b5b5dfa71999ec06ecd4932ff993d5eb072e00a",
+      "sent": "66579824251512184592765",
+      "snapshotBalance": "0",
+      "weight": "0"
+    },
+    {
+      "account": "0x88a652ed8fd3ca27ff2cada4bd1ba027a3a84d05",
+      "sent": "426586902195829660057329",
+      "snapshotBalance": "426586902195829660057329",
+      "weight": "426586902195829660057329"
+    },
+    {
+      "account": "0x8daa4f26132e99f0512a8154f019c8ff7fd6269c",
+      "sent": "3504804636708205007268664",
+      "snapshotBalance": "3504804636708205007268664",
+      "weight": "3504804636708205007268664"
+    },
+    {
+      "account": "0x8ffbfb246c2bee6454dae681297af47de99a6b78",
+      "sent": "1001552628227030023030031",
+      "snapshotBalance": "1001552628227030023030031",
+      "weight": "1001552628227030023030031"
+    },
+    {
+      "account": "0x967e23886af9781581f55a0f4c0ed2d419fa42e9",
+      "sent": "1294340429885738748140203",
+      "snapshotBalance": "1294340429885738748140203",
+      "weight": "1294340429885738748140203"
+    },
+    {
+      "account": "0x98717ded2da8fd9a239337bd9da0ef0a7273a28e",
+      "sent": "1183719699616220196558960",
+      "snapshotBalance": "1183719699616220196558960",
+      "weight": "1183719699616220196558960"
+    },
+    {
+      "account": "0x9a893b750ce7c1644a0f42f118530d1e64d4271e",
+      "sent": "762584961803443539420709",
+      "snapshotBalance": "762584961803443539420709",
+      "weight": "762584961803443539420709"
+    },
+    {
+      "account": "0x9f2c2846b5edeeb0f46affd6d86161a053bbd985",
+      "sent": "6558837300000000000000",
+      "snapshotBalance": "6558837300000000000000",
+      "weight": "6558837300000000000000"
+    },
+    {
+      "account": "0xa0d7b5cb0f57afe5a3746607a2d60ce9c2cfde5f",
+      "sent": "3128235433628207312273968",
+      "snapshotBalance": "3128235433628207312273968",
+      "weight": "3128235433628207312273968"
+    },
+    {
+      "account": "0xa1d2386dd5381b887dbb4fb13283eb9f21f92a0a",
+      "sent": "2332812160252293599898261",
+      "snapshotBalance": "2332812160252293599898261",
+      "weight": "2332812160252293599898261"
+    },
+    {
+      "account": "0xa58501a5d61ecf45ea5d39943458010f90d60999",
+      "sent": "3105863800368656736067020",
+      "snapshotBalance": "3105863800368656736067020",
+      "weight": "3105863800368656736067020"
+    },
+    {
+      "account": "0xabe0cdd036456fcc1b64d1ddb7aa3bdf7d5b98b1",
+      "sent": "38495179714623416822390747",
+      "snapshotBalance": "40281671583016038698504277",
+      "weight": "38495179714623416822390747"
+    },
+    {
+      "account": "0xac890534a98da81b4f7bea5cb78612c656667c71",
+      "sent": "31612013981011697815350085",
+      "snapshotBalance": "31612013981011697815350085",
+      "weight": "31612013981011697815350085"
+    },
+    {
+      "account": "0xaea8c6444a5e4efd738a6ec51f3d0ed0928c110b",
+      "sent": "23000000000000000000000000",
+      "snapshotBalance": "23000000000000000000000000",
+      "weight": "23000000000000000000000000"
+    },
+    {
+      "account": "0xaeb09ed3407a354f1a63e82953a26fe8f2fcc261",
+      "sent": "40450095534186922603613",
+      "snapshotBalance": "40450095534186922603613",
+      "weight": "40450095534186922603613"
+    },
+    {
+      "account": "0xb430bd296a80c320dff844ac0936cdb8f50444fb",
+      "sent": "1190296647801720970560241",
+      "snapshotBalance": "1190296647801720970560241",
+      "weight": "1190296647801720970560241"
+    },
+    {
+      "account": "0xb4659f80952dfdf15ffb378f4c6a9065ac399ca7",
+      "sent": "32341441646500536784512",
+      "snapshotBalance": "32341441646500536784512",
+      "weight": "32341441646500536784512"
+    },
+    {
+      "account": "0xc0adefef84aea2ca08a125abea147d109d1d21c9",
+      "sent": "33887573543360998963784",
+      "snapshotBalance": "33887573543360998963784",
+      "weight": "33887573543360998963784"
+    },
+    {
+      "account": "0xca1a6e5fe34293775fe0dd109d74539b567eec34",
+      "sent": "21104167927584461146411",
+      "snapshotBalance": "21104167927584461146411",
+      "weight": "21104167927584461146411"
+    },
+    {
+      "account": "0xcc242e943cb785794f93acaa835307fabae84bd4",
+      "sent": "1009146423643251899408052",
+      "snapshotBalance": "1009146423643251899408052",
+      "weight": "1009146423643251899408052"
+    },
+    {
+      "account": "0xd00db8fc3aae1d22245904f55a0d9fb389aa3ff9",
+      "sent": "37078447914301212175876",
+      "snapshotBalance": "37078447914301212175876",
+      "weight": "37078447914301212175876"
+    },
+    {
+      "account": "0xd41fcbb0e58cbeae68b151e07bd8f991afc5e1af",
+      "sent": "1193974833054712373204164",
+      "snapshotBalance": "1234485987784071432373596",
+      "weight": "1193974833054712373204164"
+    },
+    {
+      "account": "0xdd0c9e144197502537cef07eb7b7cb787c9d05ec",
+      "sent": "1444280580000000000000000",
+      "snapshotBalance": "1444280582939376402930597",
+      "weight": "1444280580000000000000000"
+    },
+    {
+      "account": "0xe389a59507e29ba2e5e4d546223597b4e91042ee",
+      "sent": "11712988478524940722168428",
+      "snapshotBalance": "11712988478524940722168428",
+      "weight": "11712988478524940722168428"
+    },
+    {
+      "account": "0xea744fa6be19ff8b2a9f61c828021885a8a5c7d9",
+      "sent": "71753636172726818687793",
+      "snapshotBalance": "71753636172726818687793",
+      "weight": "71753636172726818687793"
+    },
+    {
+      "account": "0xeafcb3d7128c81a948f9784529168127a7392d25",
+      "sent": "9446762935195386752147946",
+      "snapshotBalance": "9446762935195386752147946",
+      "weight": "9446762935195386752147946"
+    },
+    {
+      "account": "0xeb4b8ca748bc9109d145e4675d38ba67d715a466",
+      "sent": "268637510863744902138361",
+      "snapshotBalance": "268637510863744902138361",
+      "weight": "268637510863744902138361"
+    },
+    {
+      "account": "0xee2aaa315cf7ed169f93148d30d24af9318dbb66",
+      "sent": "281033233393587611043740",
+      "snapshotBalance": "281033233393587611043740",
+      "weight": "281033233393587611043740"
+    },
+    {
+      "account": "0xef86c6a333f25cf04ab6c767b9259fd5ea971f6b",
+      "sent": "1139448519307229403682419",
+      "snapshotBalance": "1139448519307229403682419",
+      "weight": "1139448519307229403682419"
+    },
+    {
+      "account": "0xf27af179f78bdb5f5377f709d5b2b438c2cb6694",
+      "sent": "7822050750371413829981088",
+      "snapshotBalance": "7822050750371413829981088",
+      "weight": "7822050750371413829981088"
+    },
+    {
+      "account": "0xfbc0b98978cf817377bfa9e44a4d2bd2d614cf43",
+      "sent": "1597111000000000000000000",
+      "snapshotBalance": "1597111123862569399682222",
+      "weight": "1597111000000000000000000"
+    }
+  ],
+  "transfers": [
+    {
+      "block": 26213231,
+      "transactionHash": "0x2763b110e73c83d2939a41ba0e55616a14912f4052366b691523cbae65f48f93",
+      "from": "0x3fdace8a3f868859a7d1098555f7220cb456491d",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1166106471651988692217287"
+    },
+    {
+      "block": 26213232,
+      "transactionHash": "0x480b0cba6124dcef31850ecf150f74745f5de69bedcb1fa8f6f0e43b49899f94",
+      "from": "0xeb4b8ca748bc9109d145e4675d38ba67d715a466",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "268637510863744902138361"
+    },
+    {
+      "block": 26213233,
+      "transactionHash": "0xcd40e6554415c9a62d282b120c99ebf6e19a68f10445b6e1699316122c9c7d0c",
+      "from": "0x66822079aabcef7f252b01abeabb95ced96feb09",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "10000000000000000000"
+    },
+    {
+      "block": 26213237,
+      "transactionHash": "0x9da07ff2c879c9ef3ceca2fe8da5305ae718c2df2839f2311eb39b5c30bac749",
+      "from": "0x66822079aabcef7f252b01abeabb95ced96feb09",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "4147810579260714636559392"
+    },
+    {
+      "block": 26213242,
+      "transactionHash": "0xf080151d338f6ee11547b5cba460bed4ca7494a1e080de9c01acd25be3c6f7b8",
+      "from": "0x76416fe0a4d3aeeef4a63fd99f6c2df7547fc0bf",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "353316117116400540167149"
+    },
+    {
+      "block": 26213242,
+      "transactionHash": "0xa5e4f405a93e2622dcd0b6ab88b38aa58d570d9912c3ada8ceb0a32539523852",
+      "from": "0x5473aad654fcdb16d87f4cb2edeb43272db5b03e",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "182751504291602307538655"
+    },
+    {
+      "block": 26213243,
+      "transactionHash": "0x3151588075d84cffce6966128155e50fcda42fd3196a8b606ab9a6c012ea2583",
+      "from": "0x3588afdb817c0c87d5d6189bf1a98a63477be818",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "410255231959416620536302"
+    },
+    {
+      "block": 26213248,
+      "transactionHash": "0x02906d3e9aa42d54d3dafd0bc3964f36b3bc81e7ec9e6e3aa8c0605e6298960f",
+      "from": "0xe389a59507e29ba2e5e4d546223597b4e91042ee",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "11712988478524940722168428"
+    },
+    {
+      "block": 26213250,
+      "transactionHash": "0x9841ac4f32913d04a8a8c7577c8de9b7fcb59a98738673179290174719960601",
+      "from": "0xac890534a98da81b4f7bea5cb78612c656667c71",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "31612013981011697815350085"
+    },
+    {
+      "block": 26213251,
+      "transactionHash": "0xcdce48041c6f03a3f143a06ef2d6e994a6ab47d6c489a8a4f9b4c25424c7575f",
+      "from": "0xaea8c6444a5e4efd738a6ec51f3d0ed0928c110b",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "23000000000000000000000000"
+    },
+    {
+      "block": 26213255,
+      "transactionHash": "0xdd2655e67a0a26ae73340ab8d27a38cf21badefc9ba4063c090bb439a03a7d3d",
+      "from": "0x0e661fe9ecd6af4fe91e302dae44ffc0dd220588",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "28712477994265079832271"
+    },
+    {
+      "block": 26213260,
+      "transactionHash": "0x1902f62906bc314c50862b5a0271b9e26b618047b442d21cbb31e3ba6a2319a8",
+      "from": "0xb4659f80952dfdf15ffb378f4c6a9065ac399ca7",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "32341441646500536784512"
+    },
+    {
+      "block": 26213275,
+      "transactionHash": "0xa983e8a40507d2be53187fbc329ebc68d4ff396477c894aa419c63b7b1b1a8a2",
+      "from": "0x09cd21b9f64a204b8a9ee180bc85c826131c8c6f",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1997418304113360249230167"
+    },
+    {
+      "block": 26213275,
+      "transactionHash": "0x3e0a635e2180d83bf513b324d00050a91ed84e10412ea513a2156e00287b7d94",
+      "from": "0xdd0c9e144197502537cef07eb7b7cb787c9d05ec",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1444280580000000000000000"
+    },
+    {
+      "block": 26213289,
+      "transactionHash": "0x1e010a98683b6509d404203bfb25eb3f5c0d9392d4ae6dfc9eaf73d6bdb46d57",
+      "from": "0x98717ded2da8fd9a239337bd9da0ef0a7273a28e",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1183719699616220196558960"
+    },
+    {
+      "block": 26213297,
+      "transactionHash": "0xb64ae7bb3283cdd8a8f9b788b37f2fe54fdbe93c14703e0ca3ea42d70cfce13b",
+      "from": "0x164087e2965d8844d0ffa6a171f9d9e01fc3a914",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "3123386274721457795962186"
+    },
+    {
+      "block": 26213297,
+      "transactionHash": "0x3459ed6822e29b8528c9776eed048b18311b73201c56969d4d8de4121799196c",
+      "from": "0x71d6be89af83e77c76e834ec0874571ae1856e32",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "260845325655038800482391"
+    },
+    {
+      "block": 26213299,
+      "transactionHash": "0x814532ab3aff56cf8470cb931f12df9f0e3ef35b6b8afce3e95260da94bf2a71",
+      "from": "0xea744fa6be19ff8b2a9f61c828021885a8a5c7d9",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "71753636172726818687793"
+    },
+    {
+      "block": 26213305,
+      "transactionHash": "0xc458c45ec2c96e231635a5080d98306191a887d7badc72c75a13beb31199838d",
+      "from": "0xc0adefef84aea2ca08a125abea147d109d1d21c9",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "33887573543360998963784"
+    },
+    {
+      "block": 26213312,
+      "transactionHash": "0x969a2a1ae2dacf5658c70c7ef2bf21d03a3f55ee8bae27571032a988b38815e2",
+      "from": "0x78850111bfa033ff326c85ba0b779bad173e3422",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "3428088656046084874308212"
+    },
+    {
+      "block": 26213315,
+      "transactionHash": "0x1813e5fe95698b654bb8352c7ccdc247bc2bc3f2ee14408e87bbd8dcb832fcd2",
+      "from": "0xf27af179f78bdb5f5377f709d5b2b438c2cb6694",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "7822050750371413829981088"
+    },
+    {
+      "block": 26213322,
+      "transactionHash": "0x05be4deeda7758998d1f6159228b7cb0bcf5ed64e26b618988dd232502c7c091",
+      "from": "0x5006d8d4e3e96c445882327921151190f7b34a7c",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "2198556940711600413141105"
+    },
+    {
+      "block": 26213328,
+      "transactionHash": "0x459f3b63aca583969d47abd4b0cdb34f64749eb983164687acee32220311fee1",
+      "from": "0xee2aaa315cf7ed169f93148d30d24af9318dbb66",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "281033233393587611043740"
+    },
+    {
+      "block": 26213331,
+      "transactionHash": "0x478ce543885c0bfbfec50d690c83c090d6aa468dbaa29494b499b8f82bb48995",
+      "from": "0xeafcb3d7128c81a948f9784529168127a7392d25",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "9446762935195386752147946"
+    },
+    {
+      "block": 26213358,
+      "transactionHash": "0xfb942cdcff217fc13be008330ddc259284a7378499b5bbb94bee29d95aeb3068",
+      "from": "0x4d358fd566bdf290ab965f6e8b5b129036a85b8e",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "3731187198061944932047061"
+    },
+    {
+      "block": 26213362,
+      "transactionHash": "0x9ef26e66b96f9ac7735b9074a73ae9f850e7deabe9e45b64d744aa5f4baf7322",
+      "from": "0x048ddd3345061e4861136336f7aa9f28c0ae9339",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "222928024971542254248088"
+    },
+    {
+      "block": 26213374,
+      "transactionHash": "0xe4950c5565be817cdc2cf3d63637ac56e786f20fe21f43db4f64a67415c378f8",
+      "from": "0xd00db8fc3aae1d22245904f55a0d9fb389aa3ff9",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "37078447914301212175876"
+    },
+    {
+      "block": 26213394,
+      "transactionHash": "0x18b3a4de63f421f74df1bc86c9483423b4868e5bf1a3b0967b55c8a7c7f15a4e",
+      "from": "0xaeb09ed3407a354f1a63e82953a26fe8f2fcc261",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "40450095534186922603613"
+    },
+    {
+      "block": 26213395,
+      "transactionHash": "0x3f16b303513dd19b04c84ac209157327b66ee95ed3df1c5d616566fa01f0f71d",
+      "from": "0xd41fcbb0e58cbeae68b151e07bd8f991afc5e1af",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1193974833054712373204164"
+    },
+    {
+      "block": 26213421,
+      "transactionHash": "0x1bf2cca88cdaf8842ddfdb230fb0d95b2a9823c3bd318f6301ebd857ad8653c9",
+      "from": "0x25b95684adef6aa980e5dcaa23762ae1b80261d3",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "2741880479041531138449446"
+    },
+    {
+      "block": 26213427,
+      "transactionHash": "0xe985eae25341c7e4fee3499bae489f9947b6ff400ec6f4feebbcd45ea95af97e",
+      "from": "0xa1d2386dd5381b887dbb4fb13283eb9f21f92a0a",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "2332812160252293599898261"
+    },
+    {
+      "block": 26213451,
+      "transactionHash": "0x403963710dc931055201f0051994b53a5bfbaf35effc82e4587e060376afa5f4",
+      "from": "0x7b5b5dfa71999ec06ecd4932ff993d5eb072e00a",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "66579824251512184592765"
+    },
+    {
+      "block": 26213482,
+      "transactionHash": "0xe37ea252bfe5df8a4e473535045ee5d973fef33c40ad797be7ee5361465142f1",
+      "from": "0x2237c6d2d6486291f43645dfccebda85f56018e1",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "76165463097759176767338"
+    },
+    {
+      "block": 26213482,
+      "transactionHash": "0x73d97742b92fc0ad349edcddb0e53e9dd8db3386b46fc8781c5d38a7ca796bf8",
+      "from": "0x8ffbfb246c2bee6454dae681297af47de99a6b78",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1001552628227030023030031"
+    },
+    {
+      "block": 26213493,
+      "transactionHash": "0x53a8e507c07c7456749e188b5b93a3656de6130af36791bc1fd2c50ebb7f854a",
+      "from": "0x5b85a75be7708d048eac178d22a68244f18232ad",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1941856832082347941447153"
+    },
+    {
+      "block": 26213526,
+      "transactionHash": "0xe8a4d360b69e07380463bd83af4622da14663d426bf9163d32bc1acc7d67b540",
+      "from": "0x28f1dd1c0322ab37fc92445c80cde829ad69a2ad",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "47692666727975688359358"
+    },
+    {
+      "block": 26213538,
+      "transactionHash": "0xd2b265f79406e17843d96c6313d8bda5ff19de03909dee63a7e74512789349fe",
+      "from": "0x6306160b3faf350efa93181acf8321af5af6ffe9",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "434988192499936311657384"
+    },
+    {
+      "block": 26213544,
+      "transactionHash": "0xc38415e63e12d3929f39b2ca460e8f19dba045a491c3001593aee2d1eb7e6ef2",
+      "from": "0x131df527ca4e83013cb24da2c3d3c6810635a980",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "141965712444526269389099"
+    },
+    {
+      "block": 26213596,
+      "transactionHash": "0x887c43d964d5f684c7eb7e5266712d4eca63111721720c716e29f0c35e6dc606",
+      "from": "0x2c44586dd63e5b70be47f20e7c83b1c2d45c3100",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "700976865025705940394290"
+    },
+    {
+      "block": 26213600,
+      "transactionHash": "0xf30bc38fdd34bbf799b3ed58984e6b78e5881d6c970aee1a1c2ea3346f79eec1",
+      "from": "0x967e23886af9781581f55a0f4c0ed2d419fa42e9",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1294340429885738748140203"
+    },
+    {
+      "block": 26213611,
+      "transactionHash": "0x589bdb0fbdef46b15273c153d916891ef5aa020ad3926bc55c67f601766a8549",
+      "from": "0xabe0cdd036456fcc1b64d1ddb7aa3bdf7d5b98b1",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "20140835791508018698504277"
+    },
+    {
+      "block": 26213613,
+      "transactionHash": "0x9bb4feea69db643834a7fee38b8991e3771d0549d2039d6af6e7caba131dac88",
+      "from": "0xfbc0b98978cf817377bfa9e44a4d2bd2d614cf43",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1597111000000000000000000"
+    },
+    {
+      "block": 26213625,
+      "transactionHash": "0xabf7664515def63c41b0457404707a3bbf6abfe810d73eaccd2598198afe65fa",
+      "from": "0xabe0cdd036456fcc1b64d1ddb7aa3bdf7d5b98b1",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "18354343923115398123886470"
+    },
+    {
+      "block": 26213632,
+      "transactionHash": "0x50a93912153f11dea476a4155bdef417f67287870aeb85f950ffb7b58def3902",
+      "from": "0x1c935414ae2301c7f1bef76951493c4ad8b3b11b",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1611701753496943139129704"
+    },
+    {
+      "block": 26213650,
+      "transactionHash": "0xd98e0eb8bb6287b548961355b11712b95b9343cda3dc214fe29308cd5f65adf7",
+      "from": "0x1d7e454ab11603667c211b065246062c95da81d8",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1737538325093453620017261"
+    },
+    {
+      "block": 26213672,
+      "transactionHash": "0x520af3a67fcb2e5eda23975bf3c426af166c5bdd447f47810cf653176ee1c1f9",
+      "from": "0xca1a6e5fe34293775fe0dd109d74539b567eec34",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "21104167927584461146411"
+    },
+    {
+      "block": 26213745,
+      "transactionHash": "0x51396191ee5bda2b83db46049bf69eab53e0c0b731000648076d231886657133",
+      "from": "0x29168e41cee30432994a4592dbfbf58528ad396c",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "633488392900074212659358"
+    },
+    {
+      "block": 26213760,
+      "transactionHash": "0x21873d1660aed4e9085b4ae4f17c422a5b40a2b7d89900ab738d405e80f2514b",
+      "from": "0xcc242e943cb785794f93acaa835307fabae84bd4",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1009146423643251899408052"
+    },
+    {
+      "block": 26213804,
+      "transactionHash": "0x0e926cbb2dea9caff36afa7b0feddcc3d2025ed81115e9c34d7fe3961502adaf",
+      "from": "0x1c1c1538f375eef2ef73abaa54c2af884ca6bb9d",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "71116032602339374679300"
+    },
+    {
+      "block": 26213806,
+      "transactionHash": "0x1f501482be4e4da5ddae7e26bf97835bbf23404a7f43d478c348307d31ea9b8e",
+      "from": "0x9a893b750ce7c1644a0f42f118530d1e64d4271e",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "762584961803443539420709"
+    },
+    {
+      "block": 26213840,
+      "transactionHash": "0xc68a79e30303cd4ee4af7a1be1e0f096f3ad7e20e815e62f2762f31e1dc14edc",
+      "from": "0x3126b0605e601dabb87afa9948ba5688f3ff479c",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "6424442856913931049275655"
+    },
+    {
+      "block": 26213843,
+      "transactionHash": "0xfc3aac54b7a3ee36353a1160165c63003c29792b471a914f4e6e0904e547e1b4",
+      "from": "0x364a021d0f8ba073d69b62682e09daf838153581",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "307203783700853233589451"
+    },
+    {
+      "block": 26213845,
+      "transactionHash": "0xe39fc59ba60984d955b73e2f820296eed17570bb586eb585816ec457ede41daa",
+      "from": "0x047f606fd5b2baa5f5c6c4ab8958e45cb6b054b7",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "3272315912286690225197429"
+    },
+    {
+      "block": 26213853,
+      "transactionHash": "0xe93f84fbcedc4d450548d9c67ea2845036c064598b747a16eb3bec5b658c7bca",
+      "from": "0x56212c1802b2be6f2e8331a2234f3cf48e264ac2",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "573384425902784285054662"
+    },
+    {
+      "block": 26213881,
+      "transactionHash": "0xd53dcdca4193f98734a55ff4a8b695a6d27e77d9cef9f39a744f1d9d762fca9d",
+      "from": "0x5def181184f761baf692c2736f7102d757aa91b5",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "4522659382947478635157007"
+    },
+    {
+      "block": 26213885,
+      "transactionHash": "0xc504d4d2dae413d8e832fe4b9b725e3a71d03ed82f1c5fdcee1672f4289029d2",
+      "from": "0x09eb5b2da87da9a3f4a2ba1bd2cb5e863a2f782c",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "6157481011779444506741292"
+    },
+    {
+      "block": 26213899,
+      "transactionHash": "0x41a15780e2bee4d9aac415f82af98d755ff9ef3f154b8a99115441fe85114271",
+      "from": "0x9f2c2846b5edeeb0f46affd6d86161a053bbd985",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "6558837300000000000000"
+    },
+    {
+      "block": 26213922,
+      "transactionHash": "0x15d66b3282e69a3f547bf94ef30bdce74ca1a8a0db20fe4f92569c9bad2cb887",
+      "from": "0x0b8be030a1d151b1fa722a794eeab43a45b1e002",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "458624464393878930154259"
+    },
+    {
+      "block": 26213966,
+      "transactionHash": "0x63c95a308d0059860b8f77332cb61639a21d9d8919871604ecff75ab02ff5afb",
+      "from": "0x8daa4f26132e99f0512a8154f019c8ff7fd6269c",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "3504804636708205007268664"
+    },
+    {
+      "block": 26213986,
+      "transactionHash": "0x2c1bf7f84e15cc0d6aa4eb927149635256d12859c278b49155abb9250ab1e5c5",
+      "from": "0x1592964e6a855c83c3a41281fe834aceea1b7a0b",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "781225652166092580017191"
+    },
+    {
+      "block": 26214088,
+      "transactionHash": "0xc6aa36afae7640dd68bdef2e36e5cedc713288112fcb9d8b41059d09abae4f56",
+      "from": "0xef86c6a333f25cf04ab6c767b9259fd5ea971f6b",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1139448519307229403682419"
+    },
+    {
+      "block": 26214089,
+      "transactionHash": "0x72e90c47616510a02f9d585b5c85d2302ad4f0cb5c4d0306794edf83b1a12281",
+      "from": "0xb430bd296a80c320dff844ac0936cdb8f50444fb",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "1190296647801720970560241"
+    },
+    {
+      "block": 26214093,
+      "transactionHash": "0xb72be1f24da976091ecc1d0006fa7bd838412ca70e30f91ca2905f024adb0e60",
+      "from": "0xa58501a5d61ecf45ea5d39943458010f90d60999",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "3105863800368656736067020"
+    },
+    {
+      "block": 26214102,
+      "transactionHash": "0xecc3345ddbedddfe1e044229c08fd54de1adf65adaf807f12168c53ecbf8c720",
+      "from": "0x88a652ed8fd3ca27ff2cada4bd1ba027a3a84d05",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "426586902195829660057329"
+    },
+    {
+      "block": 26214111,
+      "transactionHash": "0x22f1cc8a9b3771d697dff63467929f500f03a1133953d7c616816902555bdc7a",
+      "from": "0xa0d7b5cb0f57afe5a3746607a2d60ce9c2cfde5f",
+      "to": "0xe132be23ce6255930556a45406075e62fb6340c0",
+      "amount": "3128235433628207312273968"
+    }
+  ],
+  "migrationWallet": "0xe132be23ce6255930556a45406075e62fb6340c0",
+  "root": "0xe84256f66c03a4565c29addd32238495f1a0d5dda8c618e5f81ff8637c296347",
+  "totalWeight": "201084680772174552329559308",
+  "walletCount": 62,
+  "treeLayout": {
+    "order": "accounts",
+    "sortLeaves": true,
+    "sortLayers": false,
+    "duplicateOdd": false
+  },
+  "source": "Public Ethereum RPC through Alchemy; alchemy_getAssetTransfers followed by historical balanceOf eth_call at the snapshot block. No RPC credentials are included.",
+  "retrievedOn": "2026-10-21"
+}
