@@ -24,7 +24,7 @@ contract VaultHandler is Test {
     }
 
     function distribute(uint128 amount, bool rejectClaim) external {
-        imd.mint(address(vault), bound(amount, 0, 1e25));
+        imd.mint(address(vault), bound(amount, 10, 1e25));
         uint256 next = vault.nextDistributionAt();
         if (vm.getBlockTimestamp() < next) vm.warp(next);
         vm.roll(vm.getBlockNumber() + 10);
@@ -78,7 +78,7 @@ contract VaultHandler is Test {
 
     function buyback(uint96 amount) external {
         if (compensation.buybackComplete()) return;
-        if (!compensation.buybackStarted()) imd.mint(address(compensation), bound(amount, 0, 1e25));
+        if (!compensation.buybackStarted()) imd.mint(address(compensation), bound(amount, 10, 1e25));
         uint256 next = compensation.buybackAvailableAt();
         if (compensation.nextBuybackAt() > next) next = compensation.nextBuybackAt();
         if (vm.getBlockTimestamp() < next) vm.warp(next);

@@ -58,6 +58,28 @@ def standard_tree(entries):
     return "0x" + tree[0].hex(), proofs
 
 
+def layered_tree(entries):
+    """The committed compensation layout: sorted leaves, adjacent sorted pairs, an unpaired node promoted."""
+    ordered = sorted((leaf(account, value), index) for index, (account, value) in enumerate(entries))
+    level = [hashed for hashed, _ in ordered]
+    positions = {original_index: offset for offset, (_, original_index) in enumerate(ordered)}
+    layers = [level]
+    while len(level) > 1:
+        level = [node(level[i], level[i + 1]) if i + 1 < len(level) else level[i] for i in range(0, len(level), 2)]
+        layers.append(level)
+    proofs = []
+    for original_index in range(len(entries)):
+        position = positions[original_index]
+        proof = []
+        for layer in layers[:-1]:
+            sibling = position ^ 1
+            if sibling < len(layer):
+                proof.append("0x" + layer[sibling].hex())
+            position //= 2
+        proofs.append(proof)
+    return "0x" + layers[-1][0].hex(), proofs
+
+
 def read_entries(raw, field):
     if not isinstance(raw, list):
         raise ValueError("input must be a JSON array")
@@ -90,7 +112,7 @@ def build(raw, mode, pot=None):
         if pot is None or not 0 < pot <= MAX_UINT:
             raise ValueError("rewards requires --pot, the epoch's positive snapshotPot in IMD base units")
         entries = [(account, pot * balance // total) for account, balance in source] if total else []
-    root, proofs = standard_tree(entries)
+    root, proofs = layered_tree(entries) if mode == "compensation" else standard_tree(entries)
     if mode == "compensation" and root != ROOT:
         raise ValueError("dataset does not reproduce the immutable compensation root; refusing to emit proofs")
     value_name = "weight" if mode == "compensation" else "amount"

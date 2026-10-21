@@ -105,6 +105,18 @@ contract SIMDVaultTest is TestBase {
         assertEq(rewards.currentEpoch(), 2);
     }
 
+    function testRejectingMarketingCodeKeepsEthWithoutBlockingSplitOrBurn() public {
+        bind();
+        vm.etch(Network.MARKETING, hex"5f5ffd"); // PUSH0 PUSH0 REVERT: rejects every call
+        imd.mint(address(vault), 100 ether);
+        token.mint(address(vault), 10 ether);
+        vm.deal(address(vault), 1 ether);
+        vault.distribute();
+        assertEq(imd.balanceOf(address(jobs)), 25.72 ether);
+        assertEq(token.balanceOf(Network.BURN), 10 ether);
+        assertEq(address(vault).balance, 1 ether);
+    }
+
     function testRejectedClaimAndOracleCannotBlockDistributionOrBurn() public {
         bind();
         factory.setReject(true);

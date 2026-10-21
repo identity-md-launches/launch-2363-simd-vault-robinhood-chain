@@ -26,8 +26,14 @@ contract JobsVaultTest is TestBase {
         vm.prank(alice);
         vm.expectRevert(JobsVault.DailyLimit.selector);
         jobs.requestJob("{}");
+        // A second holder in the same block hits the vault-wide one-job-per-block limit.
+        vm.prank(bob);
+        vm.expectRevert(JobsVault.DailyLimit.selector);
+        jobs.requestJob("{}");
+        vm.roll(vm.getBlockNumber() + 1);
         vm.prank(bob);
         jobs.requestJob("{}");
+        vm.roll(vm.getBlockNumber() + 1);
         vm.warp(jobs.nextRequestAt(alice) - 1);
         vm.prank(alice);
         vm.expectRevert(JobsVault.DailyLimit.selector);
@@ -37,6 +43,29 @@ contract JobsVaultTest is TestBase {
         jobs.requestJob("{}");
         assertEq(imd.balanceOf(address(jobs)), 10 ether - 3 * PRICE);
         assertEq(imd.allowance(address(jobs), Network.INTAKE), 0);
+    }
+
+    function testHoldingHoppedBetweenWalletsCannotDrainBudget() public {
+        bind();
+        imd.mint(address(jobs), 100 ether);
+        uint256 opened;
+        for (uint256 i; i < 50; ++i) {
+            address wallet = address(uint160(0x5000 + i));
+            token.mint(wallet, 1_000_000 ether);
+            vm.prank(wallet);
+            try jobs.requestJob("{}") {
+                ++opened;
+            } catch {}
+            // Same block for the first ten wallets, then one block each.
+            if (i >= 9) vm.roll(vm.getBlockNumber() + 1);
+        }
+        assertEq(opened, 1 + jobs.MAX_JOBS_PER_DAY() - 1);
+        assertEq(imd.balanceOf(address(jobs)), 100 ether - jobs.MAX_JOBS_PER_DAY() * PRICE);
+        vm.warp(vm.getBlockTimestamp() + 1 days);
+        vm.prank(address(0xFEED));
+        token.mint(address(0xFEED), 1_000_000 ether);
+        vm.prank(address(0xFEED));
+        jobs.requestJob("{}");
     }
 
     function testNotConfiguredAndSetTokenOnlyVaultOnce() public {

@@ -76,19 +76,19 @@ contract CompensationVaultTest is TestBase {
     function testPartialOrRevertedSwapRollsBackBudgetAndCooldown() public {
         imd.mint(address(compensation), 1000 ether);
         vm.warp(compensation.buybackAvailableAt());
-        manager.setPartial(true);
-        vm.expectRevert(CompensationVault.InvalidSwap.selector);
+        manager.setReject(true);
+        vm.expectRevert();
         compensation.buyback();
         assertFalse(compensation.buybackStarted());
         assertEq(compensation.tranches(), 0);
         assertEq(imd.balanceOf(address(compensation)), 1000 ether);
-        manager.setPartial(false);
-        manager.setReject(true);
-        vm.expectRevert();
-        compensation.buyback();
         manager.setReject(false);
+        // A fill that stops at the price band spends only what the pool consumed.
+        manager.setPartial(true);
         compensation.buyback();
         assertEq(compensation.tranches(), 1);
+        assertEq(compensation.totalSpent(), 50 ether);
+        assertEq(imd.balanceOf(address(compensation)), 950 ether);
     }
 
     function testUnlockCallbackAuthenticatedAndReentryCannotSpendTwice() public {
@@ -119,9 +119,13 @@ contract CompensationVaultTest is TestBase {
         assertEq(imd.balanceOf(address(compensation)), 507);
     }
 
-    function testZeroOrSubTenWeiBudgetCompletesAfterWindowWithoutSwap() public {
+    function testZeroOrSubTenWeiBudgetWaitsForFeeThenCompletesAfterWindow() public {
         imd.mint(address(compensation), 9);
         vm.warp(compensation.buybackAvailableAt());
+        vm.expectRevert(CompensationVault.NothingToBuy.selector);
+        compensation.buyback();
+        assertFalse(compensation.buybackStarted());
+        vm.warp(compensation.buybackAvailableAt() + compensation.BUYBACK_WINDOW());
         compensation.buyback();
         assertTrue(compensation.buybackComplete());
         assertEq(compensation.tranches(), 0);
@@ -132,7 +136,7 @@ contract CompensationVaultTest is TestBase {
         (address[] memory accounts, uint256[] memory weights, bytes32[][] memory proofs) = batch();
         vm.expectRevert(CompensationVault.BuybackNotFinished.selector);
         compensation.airdrop(accounts, weights, proofs);
-        vm.warp(compensation.buybackAvailableAt());
+        vm.warp(compensation.buybackAvailableAt() + compensation.BUYBACK_WINDOW());
         compensation.buyback();
         token.mint(address(compensation), 100 ether);
         compensation.airdrop(accounts, weights, proofs);
@@ -195,7 +199,7 @@ contract CompensationVaultTest is TestBase {
     function fixture() private returns (CompensationProofFixture c) {
         c = new CompensationProofFixture(address(this));
         c.setLaunch(address(token), key);
-        vm.warp(c.buybackAvailableAt());
+        vm.warp(c.buybackAvailableAt() + c.BUYBACK_WINDOW());
         c.buyback();
     }
 

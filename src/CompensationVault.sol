@@ -27,6 +27,9 @@ contract CompensationVault is VaultChild, IUnlockCallback {
     uint256 public constant ANTI_SNIPER_WINDOW = 30 minutes;
     uint256 public constant TRANCHE_INTERVAL = 10 minutes;
     uint256 public constant MAX_TRANCHES = 10;
+    uint256 public constant BUYBACK_WINDOW = 3 days;
+    uint256 public constant PRICE_BAND_BPS = 150;
+    uint256 private constant BPS = 10_000;
 
     error InvalidPool();
     error TooEarly();
@@ -36,6 +39,7 @@ contract CompensationVault is VaultChild, IUnlockCallback {
     error InvalidSwap();
     error InvalidBatch();
     error NoTokens();
+    error NothingToBuy();
 
     PoolKey public poolKey;
     uint256 public buybackAvailableAt;
@@ -50,9 +54,12 @@ contract CompensationVault is VaultChild, IUnlockCallback {
     bool public buybackComplete;
     bool public airdropStarted;
     mapping(address => bool) public paid;
+    uint256 public referenceSqrtPrice;
+    uint256 public referenceSetAt;
     uint256 private pendingSwap;
 
     event LaunchSet(address indexed token, bytes32 indexed poolId, uint256 buybackAvailableAt);
+    event ReferencePriceRecorded(uint160 sqrtPriceX96);
     event BoughtBack(uint256 indexed tranche, uint256 spent, uint256 received);
     event BuybackCompleted(uint256 totalSpent, uint256 remainingIMD);
     event AirdropStarted(uint256 tokenBalance);
@@ -74,23 +81,31 @@ contract CompensationVault is VaultChild, IUnlockCallback {
         _setToken(token_);
         poolKey = key;
         buybackAvailableAt = block.timestamp + ANTI_SNIPER_WINDOW;
+        _recordReference(price);
         emit LaunchSet(token_, PoolId.unwrap(key.toId()), buybackAvailableAt);
     }
 
     /// @notice Spend at most floor(initial balance / 10), at most ten times, ten minutes apart.
-    /// @dev A remainder below ten IMD base units and post-start donations are never spendable.
+    /// @dev Every swap is bounded to PRICE_BAND_BPS (in sqrt price) around a reference price that was
+    /// recorded at an earlier timestamp, so a caller cannot move the price and trigger a tranche in
+    /// the same transaction. A price outside that band only re-records the reference; the tranche
+    /// runs on a later call. A partial fill at the band counts as a tranche; a swap that buys
+    /// nothing ends the buyback. After BUYBACK_WINDOW anyone can end it so the airdrop always opens.
     function buyback() external nonReentrant {
         if (token == address(0)) revert NotConfigured();
         if (buybackComplete) revert BuybackFinished();
         if (block.timestamp < buybackAvailableAt || block.timestamp < nextBuybackAt) revert TooEarly();
-        if (!buybackStarted) {
-            buybackStarted = true;
-            initialIMD = IERC20(Network.IMD).balanceOf(address(this));
-            trancheCap = initialIMD / MAX_TRANCHES;
-        }
-        if (trancheCap == 0) {
+        if (block.timestamp >= buybackAvailableAt + BUYBACK_WINDOW) {
             _finishBuyback();
             return;
+        }
+        if (!buybackStarted) {
+            uint256 balance = IERC20(Network.IMD).balanceOf(address(this));
+            // Wait for the anti-sniper fee instead of freezing an empty budget.
+            if (balance < MAX_TRANCHES) revert NothingToBuy();
+            buybackStarted = true;
+            initialIMD = balance;
+            trancheCap = balance / MAX_TRANCHES;
         }
         uint256 spend = Math.min(trancheCap, IERC20(Network.IMD).balanceOf(address(this)));
         if (spend == 0) {
@@ -99,20 +114,44 @@ contract CompensationVault is VaultChild, IUnlockCallback {
         }
         // V4 represents each currency delta as int128.
         if (spend > uint256(uint128(type(int128).max))) revert InvalidSwap();
+        if (referenceSetAt >= block.timestamp) revert TooEarly();
+        (uint160 price,,,) = IPoolManager(Network.POOL_MANAGER).getSlot0(poolKey.toId());
+        (uint160 lower, uint160 upper) = priceBand();
+        if (price <= lower || price >= upper) {
+            _recordReference(price);
+            return;
+        }
         uint256 beforeTokens = IERC20(token).balanceOf(address(this));
         uint256 beforeIMD = IERC20(Network.IMD).balanceOf(address(this));
         pendingSwap = spend;
-        IPoolManager(Network.POOL_MANAGER).unlock(abi.encode(spend));
-        if (pendingSwap != 0 || beforeIMD - IERC20(Network.IMD).balanceOf(address(this)) != spend) {
+        bytes memory result = IPoolManager(Network.POOL_MANAGER).unlock(abi.encode(spend));
+        (uint256 paid,) = abi.decode(result, (uint256, uint256));
+        if (
+            pendingSwap != 0 || paid > spend
+                || beforeIMD - IERC20(Network.IMD).balanceOf(address(this)) != paid
+        ) {
             revert InvalidSwap();
         }
         uint256 received = IERC20(token).balanceOf(address(this)) - beforeTokens;
-        if (received == 0) revert InvalidSwap();
-        totalSpent += spend;
+        totalSpent += paid;
+        (price,,,) = IPoolManager(Network.POOL_MANAGER).getSlot0(poolKey.toId());
+        _recordReference(price);
+        if (received == 0) {
+            // The pool cannot sell any more tokens for a tranche: nothing left worth buying.
+            _finishBuyback();
+            return;
+        }
         ++tranches;
         nextBuybackAt = block.timestamp + TRANCHE_INTERVAL;
-        emit BoughtBack(tranches, spend, received);
+        emit BoughtBack(tranches, paid, received);
         if (tranches == MAX_TRANCHES || IERC20(Network.IMD).balanceOf(address(this)) == 0) _finishBuyback();
+    }
+
+    /// @notice The sqrt prices a tranche may trade between; a swap stops at the band edge.
+    function priceBand() public view returns (uint160 lower, uint160 upper) {
+        uint256 ref = referenceSqrtPrice;
+        lower = uint160(Math.max(ref * (BPS - PRICE_BAND_BPS) / BPS, uint256(TickMath.MIN_SQRT_PRICE) + 1));
+        upper = uint160(Math.min(ref * (BPS + PRICE_BAND_BPS) / BPS, uint256(TickMath.MAX_SQRT_PRICE) - 1));
     }
 
     function unlockCallback(bytes calldata data) external returns (bytes memory) {
@@ -122,25 +161,30 @@ contract CompensationVault is VaultChild, IUnlockCallback {
         pendingSwap = 0;
         PoolKey memory key = poolKey;
         bool zeroForOne = Currency.unwrap(key.currency0) == Network.IMD;
+        (uint160 lower, uint160 upper) = priceBand();
         BalanceDelta delta = IPoolManager(Network.POOL_MANAGER)
             .swap(
                 key,
                 IPoolManager.SwapParams({
                     zeroForOne: zeroForOne,
                     amountSpecified: -int256(spend),
-                    sqrtPriceLimitX96: zeroForOne ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1
+                    sqrtPriceLimitX96: zeroForOne ? lower : upper
                 }),
                 bytes("")
             );
         int128 inputDelta = zeroForOne ? delta.amount0() : delta.amount1();
         int128 outputDelta = zeroForOne ? delta.amount1() : delta.amount0();
-        if (int256(inputDelta) != -int256(spend) || outputDelta <= 0) revert InvalidSwap();
+        if (inputDelta > 0 || outputDelta < 0 || -int256(inputDelta) > int256(spend)) revert InvalidSwap();
+        uint256 paid = uint256(-int256(inputDelta));
+        uint256 received = uint256(uint128(outputDelta));
         IPoolManager manager = IPoolManager(Network.POOL_MANAGER);
-        manager.sync(Currency.wrap(Network.IMD));
-        IERC20(Network.IMD).safeTransfer(Network.POOL_MANAGER, spend);
-        if (manager.settle() != spend) revert InvalidSwap();
-        manager.take(Currency.wrap(token), address(this), uint256(uint128(outputDelta)));
-        return bytes("");
+        if (paid != 0) {
+            manager.sync(Currency.wrap(Network.IMD));
+            IERC20(Network.IMD).safeTransfer(Network.POOL_MANAGER, paid);
+            if (manager.settle() != paid) revert InvalidSwap();
+        }
+        if (received != 0) manager.take(Currency.wrap(token), address(this), received);
+        return abi.encode(paid, received);
     }
 
     function airdrop(address[] calldata accounts, uint256[] calldata weights, bytes32[][] calldata proofs)
@@ -178,6 +222,12 @@ contract CompensationVault is VaultChild, IUnlockCallback {
     /// always uses this literal constant and has no setter, proxy or delegatecall.
     function _merkleRoot() internal pure virtual returns (bytes32) {
         return MERKLE_ROOT;
+    }
+
+    function _recordReference(uint160 price) private {
+        referenceSqrtPrice = price;
+        referenceSetAt = block.timestamp;
+        emit ReferencePriceRecorded(price);
     }
 
     function _finishBuyback() private {

@@ -25,7 +25,6 @@ contract SIMDVault is ReentrancyGuard {
     error TooEarly();
     error InvalidBody();
     error ActionNotSold();
-    error NativeTransferFailed();
 
     HolderRewards public immutable holderRewards;
     JobsVault public immutable jobsVault;
@@ -120,8 +119,9 @@ contract SIMDVault is ReentrancyGuard {
         if (burned != 0) IERC20(token).safeTransfer(Network.BURN, burned);
         uint256 nativePaid = address(this).balance;
         if (nativePaid != 0) {
+            // A rejected native push never blocks the split or the burn: the ETH waits for next week.
             (bool ok,) = MARKETING.call{value: nativePaid}("");
-            if (!ok) revert NativeTransferFailed();
+            if (!ok) nativePaid = 0;
         }
         emit Distributed(balance, holders, jobs, dev, marketing, burned, nativePaid);
     }

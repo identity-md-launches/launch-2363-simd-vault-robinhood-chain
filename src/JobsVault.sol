@@ -17,6 +17,12 @@ contract JobsVault is VaultChild {
     error InvalidBody();
 
     uint256 public constant COOLDOWN = 1 days;
+    /// @notice Vault-wide limits: a holding moved between wallets still opens at most one job per
+    /// block and the whole vault opens at most MAX_JOBS_PER_DAY jobs per 24-hour period.
+    uint256 public constant MAX_JOBS_PER_DAY = 24;
+    uint256 public lastJobBlock;
+    uint256 public periodStart;
+    uint256 public jobsInPeriod;
     uint256 public minimumHolding;
     mapping(address => uint256) public nextRequestAt;
 
@@ -38,6 +44,14 @@ contract JobsVault is VaultChild {
         if (body.length == 0 || body.length > 16_384) revert InvalidBody();
         uint256 price = IIntake(Network.INTAKE).priceOf(Network.JOB_ACTION, Network.IMD);
         if (price == 0) revert ActionNotSold();
+        if (lastJobBlock == block.number) revert DailyLimit();
+        if (block.timestamp >= periodStart + COOLDOWN) {
+            periodStart = block.timestamp;
+            jobsInPeriod = 0;
+        }
+        if (jobsInPeriod >= MAX_JOBS_PER_DAY) revert DailyLimit();
+        ++jobsInPeriod;
+        lastJobBlock = block.number;
         nextRequestAt[msg.sender] = block.timestamp + COOLDOWN;
         IERC20(Network.IMD).forceApprove(Network.INTAKE, price);
         requestId = IIntake(Network.INTAKE)

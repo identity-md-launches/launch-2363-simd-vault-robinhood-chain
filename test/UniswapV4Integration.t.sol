@@ -66,6 +66,38 @@ contract UniswapV4IntegrationTest is TestBase {
         vault.bindLaunch(7, address(token));
     }
 
+    /// Thin launch range: each tranche stops at the price band around its earlier reference,
+    /// spends only what the pool consumed, and the buyback still ends so the airdrop can open.
+    function testRealV4ThinPoolTranchesStayInsidePriceBandAndBuybackEnds() public {
+        deployCodeTo("PoolManager.sol:PoolManager", abi.encode(address(this)), Network.POOL_MANAGER);
+        IPoolManager actual = IPoolManager(Network.POOL_MANAGER);
+        address tokenAddress = address(0x1000);
+        vm.etch(tokenAddress, address(new MockToken(18)).code);
+        PoolKey memory actualKey = poolFor(tokenAddress);
+        actual.initialize(actualKey, uint160(1 << 96));
+        LiquiditySeeder seeder = new LiquiditySeeder(actual);
+        imd.mint(address(seeder), 1e27);
+        MockToken(tokenAddress).mint(address(seeder), 1e27);
+        seeder.seed(actualKey, 1e20);
+        factory.configure(actualKey, address(vault));
+        vm.prank(Network.DEV);
+        vault.bindLaunch(7, tokenAddress);
+        imd.mint(address(compensation), 1000 ether);
+        vm.warp(compensation.buybackAvailableAt());
+        for (uint256 i; i < 40 && !compensation.buybackComplete(); ++i) {
+            (uint160 lower, uint160 upper) = compensation.priceBand();
+            uint256 spentBefore = compensation.totalSpent();
+            compensation.buyback();
+            assertLe(compensation.totalSpent() - spentBefore, 100 ether);
+            uint256 price = compensation.referenceSqrtPrice();
+            assertTrue(price >= lower && price <= upper || compensation.totalSpent() == spentBefore);
+            vm.warp(vm.getBlockTimestamp() + 10 minutes);
+        }
+        assertTrue(compensation.buybackComplete());
+        assertLt(compensation.totalSpent(), 1000 ether);
+        assertEq(imd.balanceOf(address(compensation)), 1000 ether - compensation.totalSpent());
+    }
+
     function exercise(address tokenAddress) private {
         deployCodeTo("PoolManager.sol:PoolManager", abi.encode(address(this)), Network.POOL_MANAGER);
         IPoolManager actual = IPoolManager(Network.POOL_MANAGER);
