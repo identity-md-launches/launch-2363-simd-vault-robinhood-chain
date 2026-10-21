@@ -159,6 +159,8 @@ contract CompensationPriceBandTest is TestBase {
         attacker.swap(livePool, false, 2e22); // sqrt price +2%: out of band, still inside the ±600-tick range
         compensation.buyback();
         (uint160 lower, uint160 upper) = compensation.priceBand();
+        uint256 steppedReference = compensation.referenceSqrtPrice();
+        uint256 steppedAt = compensation.referenceSetAt();
         vm.warp(vm.getBlockTimestamp() + 1);
         vm.roll(vm.getBlockNumber() + 1);
         compensation.buyback();
@@ -169,8 +171,44 @@ contract CompensationPriceBandTest is TestBase {
         uint160 after_ = price();
         assertGt(after_, lower);
         assertLe(after_, upper);
-        assertEq(compensation.referenceSqrtPrice(), after_);
+        // A fill never records its own post-swap price: the next tranche's band is still the one
+        // recorded before this transaction, so a pre-positioned pool cannot carry into it.
+        assertEq(compensation.referenceSqrtPrice(), steppedReference);
+        assertEq(compensation.referenceSetAt(), steppedAt);
+        assertNotEq(compensation.referenceSqrtPrice(), uint256(after_));
         assertEq(compensation.nextBuybackAt(), vm.getBlockTimestamp() + 10 minutes);
+    }
+
+    /// The pool is parked inside the band just below its upper edge, so the tranche stops at the
+    /// edge after spending part of the cap. Whatever it spends stays inside the cap and the band.
+    /// The reference does not move, and the cooldown is never longer than one interval.
+    /// forge-config: default.fuzz.runs = 200
+    function testFuzzBandEdgeStopNeverOverspendsOrMovesReference(uint16 rawGapPpm) public {
+        vm.warp(compensation.buybackAvailableAt());
+        (, uint160 upper) = compensation.priceBand();
+        uint256 ref = compensation.referenceSqrtPrice();
+        uint256 gapPpm = bound(rawGapPpm, 1, 2000);
+        // Raise the price towards (upper - gap) with exact-input IMD; with L = 1e24 in range,
+        // Δ sqrtP ≈ amountIn * 0.997 / L, so this lands at or just short of the target.
+        uint256 target = uint256(upper) - (uint256(upper) * gapPpm) / 1e6;
+        uint256 current = price();
+        if (target > current) attacker.swap(livePool, false, ((target - current) * 1e24) >> 96);
+        uint160 before = price();
+        assertLt(before, upper);
+        compensation.buyback();
+        uint256 spent = compensation.totalSpent();
+        assertLe(spent, 100 ether);
+        assertEq(imd.balanceOf(address(compensation)), 1000 ether - spent);
+        assertLe(price(), upper);
+        assertEq(compensation.referenceSqrtPrice(), ref);
+        assertFalse(compensation.buybackComplete());
+        assertLe(compensation.nextBuybackAt(), vm.getBlockTimestamp() + 10 minutes);
+        if (spent < 100 ether) {
+            assertEq(compensation.tranches(), 0, "a band-limited fill is not a tranche");
+            assertEq(compensation.nextBuybackAt(), vm.getBlockTimestamp() + (10 minutes * spent) / 100 ether);
+        } else {
+            assertEq(compensation.tranches(), 1);
+        }
     }
 
     /// forge-config: default.fuzz.runs = 200

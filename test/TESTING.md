@@ -1,6 +1,6 @@
 # SIMD vault test coverage
 
-All test and fixture changes are under `test/`. `.imd-findings.json` reports one open defect: the vault-wide job caps added in the latest revision (see Limits). Application contracts, configuration, and dependencies are unchanged. The default suite uses the vendored dependencies and needs no network.
+All test and fixture changes are under `test/`. `.imd-findings.json` reports one open low-severity deviation from the brief: buyback partial fills (see Limits). Application contracts, configuration, and dependencies are unchanged. The default suite uses the vendored dependencies and needs no network.
 
 ## Coverage added to the accepted suite
 
@@ -10,7 +10,7 @@ All test and fixture changes are under `test/`. `.imd-findings.json` reports one
 | `CompensationFailures.t.sol` | Malformed batches; atomic rollback when the second recipient rejects payment; airdrop reentrancy; repeated and duplicate entries in either order; arbitrary unproven claims against the production root; token/IMD transfer failures during first and later tranches; inputs that exceed v4's signed delta range. |
 | `JobsStateful.t.sol` | Four actors move token holdings, fund the jobs vault, advance time, change external Intake price/availability, and submit valid/invalid requests. An independent model predicts every success or revert, tracks each wallet's cooldown, and reconciles every IMD payment. It also models the vault-wide one-job-per-block and 24-per-period limits and checks the vault's counters against that model. |
 | `CompensationStateful.t.sol` | Random funding, time advances, successful/reverting buybacks, and valid/invalid/duplicate/reverting airdrop batches against the actual child deployed by SIMDVault. Independent ledgers reconcile both assets, frozen budgets, tranche timing, and two real beneficiaries' payments. `afterInvariant` finishes every random prefix and checks both can still be paid. |
-| `CompensationPriceBand.t.sol` | Real v4 PoolManager. A price front-run in the same transaction only re-records the reference: nothing is spent, no tranche is used, and an immediate retry reverts. The next tranche trades only inside the new band. Fuzzed front-runs in either direction never push a tranche past the band recorded before the transaction. |
+| `CompensationPriceBand.t.sol` | Real v4 PoolManager. A price front-run in the same transaction only re-records the reference: nothing is spent, no tranche is used, and an immediate retry reverts. The next tranche trades only inside the new band, and the fill leaves the reference and its timestamp unchanged. Fuzzed front-runs in either direction never push a tranche past the band recorded before the transaction. Fuzzed band-edge parking (1–2000 ppm below the upper edge) never overspends the cap, never moves the reference and never ends the buyback; a band-limited fill is not a tranche and its cooldown is proportional to its spend. |
 | `MigrationClaims.t.sol` | All 62 actual historical beneficiaries and proofs match the committed root and total. Production-instance payouts after ten buybacks, multiple batches, post-start donations, repeated claims, corrupted proofs, changed weights, and 1,000 allocation/order fuzz cases. |
 | `VaultInvariants.t.sol` | Extends the existing multi-contract handler with factory/direct IMD, token and ETH receipts and distribution attempts before the cooldown. Checks native/token custody, zero residual Intake approvals, reward carry accounting, and closed/settled requests in addition to IMD solvency. |
 | `RobinhoodFork.t.sol` | Adds live Intake job eligibility/cooldown tests, oracle payment and callback authorization, and native receipt/distribution. Supports an explicitly configured RPC while still skipping cleanly offline. |
@@ -45,7 +45,7 @@ Checked on 2026-10-21 with Forge 1.8.3, Solc 0.8.26, the unchanged project confi
 | Check | Result |
 | --- | --- |
 | `forge build` | Pass |
-| Default `forge test` | 88 passed, 0 failed; optional fork setup skipped without RPC configuration |
+| Default `forge test` | 98 passed, 0 failed; optional fork setup skipped without RPC configuration |
 | Explicit Robinhood fork suite, public RPC at latest head | 5 passed, 0 failed, 0 skipped |
 | Stateful suites | 49,152 random handler calls total, 0 unexpected reverts; terminal compensation checks also pass |
 | Real migration fixture | All 62 proofs and payouts pass; raw transfer/snapshot evidence reconciles exactly |
@@ -70,3 +70,7 @@ Also updated for the author's latest revision: an out-of-band buyback call now m
 Buyback price band: each tranche is limited to about ±3% price movement, and at most ten tranches run. If spending the whole budget would move the price further than that, or `BUYBACK_WINDOW` passes, the unspent IMD stays locked in CompensationVault for good. This is the author's documented trade-off for sandwich resistance. It is not asserted as correct for every pool depth.
 
 The separate Test token/hook launch is not provided. Funding is simulated in local tests, so its intended 10% allocation and actual anti-sniper-fee delivery are not verified. Live fork tests cover on-chain payment and integration, not off-chain admission, panel consensus, or publication of Merkle proofs.
+
+Updated for the author's fix to findings `3d6c92` and `8d4670`: a filled tranche no longer records its post-swap price as the reference (`testTrancheAfterReRecordTradesOnlyInsideNewBand` now asserts the reference is unchanged), and a swap that stops at the band edge is a partial fill rather than a tranche.
+
+Open finding (buyback rate limit, low): the brief asks for "up to 10 tranches … at most one call every 10 minutes". A partial fill is not counted as a tranche, and it sets a cooldown of only `10 minutes * spent / cap`. With 1e24 liquidity in ±600 ticks around 1:1, a pool parked 25 ppm below the band's upper edge makes the first call spend 70.51 IMD. A full 100 IMD tranche follows 423 s later, so 1.7 caps are spent in two swaps inside ten minutes. The per-call cap still holds. The tests assert that cap and the proportional cooldown, but none asserts that the shorter spacing meets the brief. `.imd-findings.json` has the reproduction.
