@@ -129,25 +129,30 @@ contract AdversarialLaunchAndDistributionTest is TestBase {
         assertEq(imd.balanceOf(address(jobs)), 32.15 ether);
     }
 
-    function testRejectedNativeRecipientRollsBackAndImmediateRetrySucceeds() public {
+    function testRejectedNativeRecipientKeepsEthUntilAcceptingWeek() public {
         bind();
         imd.mint(address(vault), 100 ether);
         token.mint(address(vault), 9 ether);
         vm.deal(address(vault), 2 ether);
         vm.etch(Network.MARKETING, address(new RejectNativePayment()).code);
-        vm.expectRevert(SIMDVault.NativeTransferFailed.selector);
+        // The rejected push neither blocks the split/burn nor leaves ETH anywhere but the vault.
         vault.distribute();
-        assertEq(vault.nextDistributionAt(), 0);
-        assertEq(rewards.currentEpoch(), 0);
-        assertEq(imd.balanceOf(address(vault)), 100 ether);
-        assertEq(token.balanceOf(Network.BURN), 0);
-        assertEq(address(vault).balance, 2 ether);
-        vm.etch(Network.MARKETING, "");
-        uint256 beforeNative = Network.MARKETING.balance;
-        vault.distribute();
-        assertEq(Network.MARKETING.balance - beforeNative, 2 ether);
+        assertEq(vault.nextDistributionAt(), block.timestamp + 7 days);
+        assertEq(rewards.currentEpoch(), 1);
         assertEq(imd.balanceOf(address(jobs)), 25.72 ether);
         assertEq(token.balanceOf(Network.BURN), 9 ether);
+        assertEq(address(vault).balance, 2 ether);
+        // No early retry is possible; the ETH waits for the next week.
+        vm.etch(Network.MARKETING, "");
+        vm.expectRevert(SIMDVault.TooEarly.selector);
+        vault.distribute();
+        vm.warp(vault.nextDistributionAt());
+        vm.roll(vm.getBlockNumber() + 1);
+        vm.deal(address(vault), 3 ether);
+        uint256 beforeNative = Network.MARKETING.balance;
+        vault.distribute();
+        assertEq(Network.MARKETING.balance - beforeNative, 3 ether);
+        assertEq(address(vault).balance, 0);
     }
 
     function testMaximumUintBalanceSplitsWithoutIntermediateOverflow() public {
@@ -395,6 +400,7 @@ contract AdversarialJobsTest is TestBase {
         vm.prank(alice);
         token.transfer(bob, 1);
         vm.warp(next);
+        vm.roll(vm.getBlockNumber() + 1);
         vm.prank(alice);
         vm.expectRevert(JobsVault.InsufficientHolding.selector);
         jobs.requestJob("second");

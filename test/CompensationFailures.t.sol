@@ -112,7 +112,8 @@ contract CompensationFailuresTest is TestBase {
     /// forge-config: default.fuzz.runs = 1000
     function testFuzzProductionRootRejectsUnprovenClaims(address account, uint128 weight) public {
         bind();
-        vm.warp(compensation.buybackAvailableAt());
+        // An empty budget cannot start buyback; the window end is the only way to open the airdrop.
+        vm.warp(compensation.buybackAvailableAt() + compensation.BUYBACK_WINDOW());
         compensation.buyback();
         token.mint(address(compensation), 100 ether);
         address[] memory accounts = new address[](1);
@@ -186,7 +187,7 @@ contract CompensationFailuresTest is TestBase {
     function readyFixture(MockToken t) private returns (CompensationProofFixture c) {
         c = new CompensationProofFixture(address(this));
         c.setLaunch(address(t), poolFor(address(t)));
-        vm.warp(c.buybackAvailableAt());
+        vm.warp(c.buybackAvailableAt() + c.BUYBACK_WINDOW());
         c.buyback();
     }
 

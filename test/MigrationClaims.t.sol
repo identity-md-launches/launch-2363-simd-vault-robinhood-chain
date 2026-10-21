@@ -66,7 +66,7 @@ contract MigrationClaimsTest is TestBase {
     }
 
     function testCorruptedRealProofsSkipWithoutConsumingEligibility() public {
-        vm.warp(compensation.buybackAvailableAt());
+        vm.warp(compensation.buybackAvailableAt() + compensation.BUYBACK_WINDOW());
         compensation.buyback();
         token.mint(address(compensation), 100 ether);
         (address[] memory accounts, uint256[] memory weights, bytes32[][] memory proofs) =
@@ -93,7 +93,7 @@ contract MigrationClaimsTest is TestBase {
         public
     {
         uint256 allocation = bound(rawAllocation, 1, 1e28);
-        vm.warp(compensation.buybackAvailableAt());
+        vm.warp(compensation.buybackAvailableAt() + compensation.BUYBACK_WINDOW());
         compensation.buyback();
         token.mint(address(compensation), allocation);
         (address[] memory accounts, uint256[] memory weights, bytes32[][] memory proofs) =

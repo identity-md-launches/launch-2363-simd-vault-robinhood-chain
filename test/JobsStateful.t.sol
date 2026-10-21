@@ -22,6 +22,11 @@ contract JobBudgetHandler is Test {
     uint256 public requests;
     uint256 public rejectedRequests;
     uint256 public price = 0.5 ether;
+    // Vault-wide limits: one job per block, MAX_JOBS_PER_DAY per period opened by the first job after it ends.
+    uint256 public lastJobBlock;
+    uint256 public periodStart;
+    uint256 public jobsInPeriod;
+    uint256 public vaultWideRejections;
     bool public intakeRejects;
 
     constructor(JobsVault jobs_, MockToken token_) {
@@ -68,12 +73,23 @@ contract JobBudgetHandler is Test {
         bytes memory body =
             emptyBody ? bytes("") : bytes("{\"objective\":\"a report\",\"template\":\"research\"}");
         bytes4 expectedError;
-        if (holdings[actor] < 1_000_000 ether) expectedError = JobsVault.InsufficientHolding.selector;
-        else if (now_ < nextAllowed[actor]) expectedError = JobsVault.DailyLimit.selector;
-        else if (emptyBody) expectedError = JobsVault.InvalidBody.selector;
-        else if (price == 0) expectedError = JobsVault.ActionNotSold.selector;
-        else if (intakeRejects) expectedError = bytes4(keccak256("Error(string)"));
-        else if (funded - spent < price) expectedError = IERC20Errors.ERC20InsufficientBalance.selector;
+        if (holdings[actor] < 1_000_000 ether) {
+            expectedError = JobsVault.InsufficientHolding.selector;
+        } else if (now_ < nextAllowed[actor]) {
+            expectedError = JobsVault.DailyLimit.selector;
+        } else if (emptyBody) {
+            expectedError = JobsVault.InvalidBody.selector;
+        } else if (price == 0) {
+            expectedError = JobsVault.ActionNotSold.selector;
+        } else if (lastJobBlock == vm.getBlockNumber()) {
+            expectedError = JobsVault.DailyLimit.selector;
+        } else if (now_ < periodStart + 1 days && jobsInPeriod >= 24) {
+            expectedError = JobsVault.DailyLimit.selector;
+        } else if (intakeRejects) {
+            expectedError = bytes4(keccak256("Error(string)"));
+        } else if (funded - spent < price) {
+            expectedError = IERC20Errors.ERC20InsufficientBalance.selector;
+        }
 
         vm.prank(actors[actor]);
         (bool ok, bytes memory result) = address(jobs).call(abi.encodeCall(jobs.requestJob, (body)));
@@ -81,6 +97,10 @@ contract JobBudgetHandler is Test {
             assertFalse(ok, "an ineligible request spent the jobs budget");
             assertEq(bytes4(result), expectedError, "reverted for a reason the model did not predict");
             ++rejectedRequests;
+            if (
+                expectedError == JobsVault.DailyLimit.selector && holdings[actor] >= 1_000_000 ether
+                    && now_ >= nextAllowed[actor]
+            ) ++vaultWideRejections;
         } else {
             assertTrue(ok, "a funded, eligible request unexpectedly reverted");
             assertTrue(abi.decode(result, (bytes32)) != bytes32(0));
@@ -89,6 +109,12 @@ contract JobBudgetHandler is Test {
             assertEq(intake.lastBody(), body);
             assertEq(intake.allowanceSeen(), price);
             nextAllowed[actor] = now_ + 1 days;
+            if (now_ >= periodStart + 1 days) {
+                periodStart = now_;
+                jobsInPeriod = 0;
+            }
+            ++jobsInPeriod;
+            lastJobBlock = vm.getBlockNumber();
             spent += price;
             ++requests;
         }
@@ -131,6 +157,10 @@ contract JobsStatefulTest is TestBase {
         assertEq(intake.nonce(), handler.requests());
         assertEq(imd.totalSupply(), handler.funded());
         assertEq(imd.allowance(address(jobs), Network.INTAKE), 0);
+        assertEq(jobs.lastJobBlock(), handler.lastJobBlock());
+        assertEq(jobs.periodStart(), handler.periodStart());
+        assertEq(jobs.jobsInPeriod(), handler.jobsInPeriod());
+        assertLe(jobs.jobsInPeriod(), jobs.MAX_JOBS_PER_DAY());
         for (uint256 i; i < 4; ++i) {
             address actor = handler.actors(i);
             assertEq(jobs.nextRequestAt(actor), handler.nextAllowed(i));
