@@ -15,12 +15,40 @@ contract VaultHandler is Test {
     HolderRewards public immutable rewards;
     CompensationVault public immutable compensation;
     MockToken public immutable imd = MockToken(Network.IMD);
+    MockToken public immutable token;
+    uint256 public immutable marketingNativeBefore;
+    uint256 public nativeFunded;
     uint256 public successfulClaims;
 
     constructor(SIMDVault vault_) {
         vault = vault_;
         rewards = vault_.holderRewards();
         compensation = vault_.compensationVault();
+        token = MockToken(vault_.token());
+        marketingNativeBefore = Network.MARKETING.balance;
+    }
+
+    function receiveFees(uint96 rawIMD, uint96 rawTokens, uint96 rawNative, bool fromFactory) external {
+        address recipient = fromFactory ? Network.FACTORY : address(vault);
+        imd.mint(recipient, bound(rawIMD, 0, 1e25));
+        token.mint(recipient, bound(rawTokens, 0, 1e25));
+        uint256 nativeAmount = bound(rawNative, 0, 10 ether);
+        nativeFunded += nativeAmount;
+        vm.deal(recipient, recipient.balance + nativeAmount);
+    }
+
+    function attemptDistribution() external {
+        uint256 next = vault.nextDistributionAt();
+        if (vm.getBlockTimestamp() < next) {
+            vm.expectRevert(SIMDVault.TooEarly.selector);
+            vault.distribute();
+            assertEq(vault.nextDistributionAt(), next);
+        } else {
+            vault.distribute();
+            assertEq(vault.nextDistributionAt(), vm.getBlockTimestamp() + 7 days);
+            assertEq(token.balanceOf(address(vault)), 0);
+            assertEq(address(vault).balance, 0);
+        }
     }
 
     function distribute(uint128 amount, bool rejectClaim) external {
@@ -90,8 +118,8 @@ contract VaultHandler is Test {
     }
 }
 
-/// forge-config: default.invariant.runs = 64
-/// forge-config: default.invariant.depth = 32
+/// forge-config: default.invariant.runs = 256
+/// forge-config: default.invariant.depth = 64
 /// forge-config: default.invariant.fail-on-revert = true
 contract VaultInvariantsTest is TestBase {
     VaultHandler private handler;
@@ -102,13 +130,15 @@ contract VaultInvariantsTest is TestBase {
         handler = new VaultHandler(vault);
         token.mint(address(handler), 1_000_000 ether);
         targetContract(address(handler));
-        bytes4[] memory selectors = new bytes4[](6);
+        bytes4[] memory selectors = new bytes4[](8);
         selectors[0] = handler.distribute.selector;
         selectors[1] = handler.advance.selector;
         selectors[2] = handler.rollover.selector;
         selectors[3] = handler.settleAndClaim.selector;
         selectors[4] = handler.buyback.selector;
         selectors[5] = handler.requestJob.selector;
+        selectors[6] = handler.receiveFees.selector;
+        selectors[7] = handler.attemptDistribution.selector;
         targetSelector(FuzzSelector(address(handler), selectors));
     }
 
@@ -118,7 +148,12 @@ contract VaultInvariantsTest is TestBase {
             HolderRewards.Epoch memory e = rewards.getEpoch(id);
             assertLe(e.claimed, e.snapshotPot);
             assertLe(e.claimed, e.pot);
-            if (!e.closed) reserve += e.pot - e.claimed;
+            if (!e.closed) {
+                reserve += e.pot - e.claimed;
+                assertEq(e.pot, e.snapshotPot + e.carry);
+                assertLe(e.carry, e.pot - e.claimed);
+            }
+            if (e.closed || e.ready) assertEq(rewards.pending(e.requestId), 0);
         }
         assertEq(reserve, rewards.totalReserved());
         assertEq(imd.balanceOf(address(rewards)), reserve);
@@ -134,7 +169,23 @@ contract VaultInvariantsTest is TestBase {
         uint256 accounted = imd.balanceOf(address(vault)) + imd.balanceOf(address(rewards))
             + imd.balanceOf(address(jobs)) + imd.balanceOf(address(compensation)) + imd.balanceOf(Network.DEV)
             + imd.balanceOf(Network.INTAKE) + imd.balanceOf(Network.POOL_MANAGER)
-            + imd.balanceOf(address(handler));
+            + imd.balanceOf(address(handler)) + imd.balanceOf(Network.FACTORY);
         assertEq(accounted, imd.totalSupply());
+    }
+
+    function invariantNativeAndLaunchTokensRemainAtAuthorizedDestinations() public view {
+        assertEq(
+            address(vault).balance + Network.FACTORY.balance
+                + (Network.MARKETING.balance - handler.marketingNativeBefore()),
+            handler.nativeFunded()
+        );
+        uint256 tokensAccounted = token.balanceOf(address(vault)) + token.balanceOf(Network.FACTORY)
+            + token.balanceOf(Network.POOL_MANAGER) + token.balanceOf(address(compensation))
+            + token.balanceOf(Network.BURN) + token.balanceOf(address(handler));
+        assertEq(tokensAccounted, token.totalSupply());
+        assertEq(token.balanceOf(Network.DEV), 0, "launch tokens must be burned, never paid to dev");
+        assertEq(imd.allowance(address(vault), Network.INTAKE), 0);
+        assertEq(imd.allowance(address(rewards), Network.INTAKE), 0);
+        assertEq(imd.allowance(address(jobs), Network.INTAKE), 0);
     }
 }
