@@ -267,10 +267,21 @@ contract AdversarialOracleLifecycleTest is TestBase {
         assertEq(intake.allowanceSeen(), 2 ether);
         assertEq(imd.balanceOf(bob), 0);
         assertEq(imd.balanceOf(address(rewards)), 10 ether);
+        assertTrue(retried.requestId != original.requestId);
+        assertEq(rewards.pending(original.requestId), 1, "a retry never invalidates the paid-for request");
+        assertEq(rewards.pending(retried.requestId), 1);
+        // The earlier request's answer still settles the epoch: same question, same snapshot block.
         vm.prank(Network.INTAKE);
-        vm.expectRevert(HolderRewards.UnknownRequest.selector);
         rewards.onOracleResult(original.requestId, oldAnswer, oldSignature);
-        deliver(1, leaf(alice, 10 ether));
+        assertTrue(rewards.getEpoch(1).ready);
+        assertEq(rewards.getEpoch(1).root, leaf(alice, 10 ether));
+        // The retried request's answer, though validly signed, cannot replace the installed root.
+        OracleAttestation.Attestation memory late = answer(1, leaf(bob, 10 ether));
+        bytes memory lateSignature = signature(late);
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(HolderRewards.AlreadyAnswered.selector);
+        rewards.onOracleResult(retried.requestId, late, lateSignature);
+        assertEq(rewards.getEpoch(1).root, leaf(alice, 10 ether));
         vm.expectRevert(HolderRewards.NotReady.selector);
         rewards.retryOracle(1);
     }

@@ -114,7 +114,9 @@ contract CompensationPriceBandTest is TestBase {
         assertEq(imd.balanceOf(address(compensation)), 1000 ether);
         assertEq(IERC20(TOKEN).balanceOf(address(compensation)), tokensBefore);
         assertEq(price(), pushed, "the vault did not trade into the manipulated price");
-        assertEq(compensation.referenceSqrtPrice(), pushed);
+        // The reference moves one band step towards the pushed price, never onto it.
+        assertEq(compensation.referenceSqrtPrice(), upper);
+        assertLt(compensation.referenceSqrtPrice(), pushed);
         assertEq(compensation.referenceSetAt(), vm.getBlockTimestamp());
         assertEq(compensation.nextBuybackAt(), 0, "an out-of-band call is not a tranche");
         // The budget froze on the first call; it cannot be retried in the same timestamp.
@@ -122,6 +124,34 @@ contract CompensationPriceBandTest is TestBase {
         assertEq(compensation.trancheCap(), 100 ether);
         vm.expectRevert(CompensationVault.TooEarly.selector);
         compensation.buyback();
+    }
+
+    /// A large push only walks the reference one band step per ten minutes: the vault cannot be made
+    /// to trade at a price the manipulator did not hold against arbitrage for that long.
+    function testLargePushWalksReferenceOneStepPerInterval() public {
+        vm.warp(compensation.buybackAvailableAt());
+        attacker.swap(livePool, false, 5e22); // well past one band step, inside the seeded range
+        uint160 pushed = price();
+        uint256 ref0 = compensation.referenceSqrtPrice();
+        (, uint160 upper0) = compensation.priceBand();
+        assertGt(pushed, upper0);
+        compensation.buyback();
+        assertEq(compensation.referenceSqrtPrice(), upper0);
+        uint256 setAt = compensation.referenceSetAt();
+        (, uint160 upper1) = compensation.priceBand();
+        assertGt(pushed, upper1, "still out of band after one step");
+        // Still out of band before the interval: refused, nothing spent, reference unchanged.
+        vm.warp(setAt + 10 minutes - 1);
+        vm.roll(vm.getBlockNumber() + 1);
+        vm.expectRevert(CompensationVault.TooEarly.selector);
+        compensation.buyback();
+        vm.warp(setAt + 10 minutes);
+        compensation.buyback();
+        assertEq(compensation.referenceSqrtPrice(), upper1);
+        assertGt(upper1, ref0);
+        assertEq(compensation.totalSpent(), 0);
+        assertEq(compensation.tranches(), 0);
+        assertEq(imd.balanceOf(address(compensation)), 1000 ether);
     }
 
     function testTrancheAfterReRecordTradesOnlyInsideNewBand() public {

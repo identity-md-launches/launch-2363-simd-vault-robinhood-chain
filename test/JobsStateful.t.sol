@@ -22,11 +22,10 @@ contract JobBudgetHandler is Test {
     uint256 public requests;
     uint256 public rejectedRequests;
     uint256 public price = 0.5 ether;
-    // Vault-wide limits: one job per block, MAX_JOBS_PER_DAY per period opened by the first job after it ends.
-    uint256 public lastJobBlock;
-    uint256 public periodStart;
-    uint256 public jobsInPeriod;
-    uint256 public vaultWideRejections;
+    // The brief's rule is per wallet only: an eligible wallet is never refused because other wallets
+    // already opened jobs in the same block or the same day. These count when that was exercised.
+    uint256 public lastSuccessBlock;
+    uint256 public sameBlockSuccesses;
     bool public intakeRejects;
 
     constructor(JobsVault jobs_, MockToken token_) {
@@ -81,10 +80,6 @@ contract JobBudgetHandler is Test {
             expectedError = JobsVault.InvalidBody.selector;
         } else if (price == 0) {
             expectedError = JobsVault.ActionNotSold.selector;
-        } else if (lastJobBlock == vm.getBlockNumber()) {
-            expectedError = JobsVault.DailyLimit.selector;
-        } else if (now_ < periodStart + 1 days && jobsInPeriod >= 24) {
-            expectedError = JobsVault.DailyLimit.selector;
         } else if (intakeRejects) {
             expectedError = bytes4(keccak256("Error(string)"));
         } else if (funded - spent < price) {
@@ -97,10 +92,6 @@ contract JobBudgetHandler is Test {
             assertFalse(ok, "an ineligible request spent the jobs budget");
             assertEq(bytes4(result), expectedError, "reverted for a reason the model did not predict");
             ++rejectedRequests;
-            if (
-                expectedError == JobsVault.DailyLimit.selector && holdings[actor] >= 1_000_000 ether
-                    && now_ >= nextAllowed[actor]
-            ) ++vaultWideRejections;
         } else {
             assertTrue(ok, "a funded, eligible request unexpectedly reverted");
             assertTrue(abi.decode(result, (bytes32)) != bytes32(0));
@@ -109,12 +100,8 @@ contract JobBudgetHandler is Test {
             assertEq(intake.lastBody(), body);
             assertEq(intake.allowanceSeen(), price);
             nextAllowed[actor] = now_ + 1 days;
-            if (now_ >= periodStart + 1 days) {
-                periodStart = now_;
-                jobsInPeriod = 0;
-            }
-            ++jobsInPeriod;
-            lastJobBlock = vm.getBlockNumber();
+            if (requests > 0 && lastSuccessBlock == vm.getBlockNumber()) ++sameBlockSuccesses;
+            lastSuccessBlock = vm.getBlockNumber();
             spent += price;
             ++requests;
         }
@@ -138,6 +125,8 @@ contract JobsStatefulTest is TestBase {
         handler.request(0, false);
         handler.request(0, false);
         handler.request(2, false);
+        // A second eligible holder in the same block is served: no vault-wide per-block limit.
+        handler.request(1, false);
         targetContract(address(handler));
         bytes4[] memory selectors = new bytes4[](5);
         selectors[0] = handler.fund.selector;
@@ -157,15 +146,50 @@ contract JobsStatefulTest is TestBase {
         assertEq(intake.nonce(), handler.requests());
         assertEq(imd.totalSupply(), handler.funded());
         assertEq(imd.allowance(address(jobs), Network.INTAKE), 0);
-        assertEq(jobs.lastJobBlock(), handler.lastJobBlock());
-        assertEq(jobs.periodStart(), handler.periodStart());
-        assertEq(jobs.jobsInPeriod(), handler.jobsInPeriod());
-        assertLe(jobs.jobsInPeriod(), jobs.MAX_JOBS_PER_DAY());
+        assertGt(handler.sameBlockSuccesses(), 0, "same-block service by two holders was exercised");
         for (uint256 i; i < 4; ++i) {
             address actor = handler.actors(i);
             assertEq(jobs.nextRequestAt(actor), handler.nextAllowed(i));
             assertEq(token.balanceOf(actor), handler.holdings(i));
             assertEq(imd.balanceOf(actor), 0, "job callers never receive the vault's IMD");
         }
+    }
+}
+
+/// forge-config: default.fuzz.runs = 256
+contract JobsPerWalletRuleTest is TestBase {
+    /// Regression for the vault-wide cap finding: however many wallets a single bag is moved
+    /// through first, a holder who has held throughout and never asked is served, and two
+    /// independent holders are both served in the same block.
+    function testFuzzHoppedBagNeverStarvesAnEligibleHolder(uint8 rawHops, uint8 rawGap) public {
+        bind();
+        uint256 hops = bound(rawHops, 1, 60);
+        uint256 gap = bound(rawGap, 0, 30);
+        imd.mint(address(jobs), (hops + 2) * PRICE);
+        address holder = makeAddr("long-term holder");
+        address other = makeAddr("second holder");
+        token.mint(holder, 1_000_000 ether);
+        token.mint(other, 1_000_000 ether);
+        address current = makeAddr("squatter");
+        token.mint(current, 1_000_000 ether);
+        for (uint256 i; i < hops; ++i) {
+            address next = address(uint160(0xBEEF0000 + i));
+            vm.prank(current);
+            token.transfer(next, 1_000_000 ether);
+            current = next;
+            vm.prank(current);
+            jobs.requestJob("{}");
+            vm.roll(vm.getBlockNumber() + 1);
+            vm.warp(vm.getBlockTimestamp() + gap);
+        }
+        vm.prank(holder);
+        jobs.requestJob("{}");
+        vm.prank(other);
+        jobs.requestJob("{}");
+        assertEq(imd.balanceOf(address(jobs)), 0);
+        assertEq(intake.nonce(), hops + 2);
+        vm.prank(holder);
+        vm.expectRevert(JobsVault.DailyLimit.selector);
+        jobs.requestJob("{}");
     }
 }
