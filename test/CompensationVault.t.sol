@@ -83,12 +83,24 @@ contract CompensationVaultTest is TestBase {
         assertEq(compensation.tranches(), 0);
         assertEq(imd.balanceOf(address(compensation)), 1000 ether);
         manager.setReject(false);
-        // A fill that stops at the price band spends only what the pool consumed.
+        // A fill that stops at the price band spends only what the pool consumed. It is not a
+        // tranche, and its cooldown is proportional to the spend: half a cap, half an interval.
         manager.setPartial(true);
         compensation.buyback();
-        assertEq(compensation.tranches(), 1);
+        assertEq(compensation.tranches(), 0);
         assertEq(compensation.totalSpent(), 50 ether);
         assertEq(imd.balanceOf(address(compensation)), 950 ether);
+        assertFalse(compensation.buybackComplete());
+        assertEq(compensation.nextBuybackAt(), vm.getBlockTimestamp() + 5 minutes);
+        vm.warp(vm.getBlockTimestamp() + 5 minutes - 1);
+        vm.expectRevert(CompensationVault.TooEarly.selector);
+        compensation.buyback();
+        vm.warp(vm.getBlockTimestamp() + 1);
+        manager.setPartial(false);
+        compensation.buyback();
+        assertEq(compensation.tranches(), 1);
+        assertEq(compensation.totalSpent(), 150 ether);
+        assertEq(compensation.nextBuybackAt(), vm.getBlockTimestamp() + 10 minutes);
     }
 
     function testUnlockCallbackAuthenticatedAndReentryCannotSpendTwice() public {

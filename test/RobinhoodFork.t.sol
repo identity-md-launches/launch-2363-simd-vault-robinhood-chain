@@ -110,11 +110,14 @@ contract RobinhoodForkTest is Test {
         vault.bindLaunch(TEST_LAUNCH, token);
         deal(Network.IMD, address(vault.compensationVault()), 1000 ether);
         vm.warp(vault.compensationVault().buybackAvailableAt());
-        for (uint256 i; i < 10; ++i) {
+        // The fixed-reference band can make the vault's own price impact step the reference between
+        // fills, so allow more calls than tranches: the budget still ends in ten full tranches.
+        for (uint256 i; i < 60 && !vault.compensationVault().buybackComplete(); ++i) {
             vault.compensationVault().buyback();
             vm.warp(vm.getBlockTimestamp() + 10 minutes);
         }
         assertTrue(vault.compensationVault().buybackComplete());
+        assertEq(vault.compensationVault().tranches(), 10);
         assertEq(IERC20(Network.IMD).balanceOf(address(vault.compensationVault())), 0);
         // The live factory pays its real position's accrued IMD fees to its requester.
         factory.claimFees(TEST_LAUNCH);

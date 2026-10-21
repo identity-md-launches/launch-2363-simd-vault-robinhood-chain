@@ -127,7 +127,7 @@ contract VaultInvariantsTest is TestBase {
     function invariantBuybackNeverExceedsFrozenBudgetOrTenTranches() public view {
         assertLe(compensation.tranches(), 10);
         assertLe(compensation.totalSpent(), compensation.initialIMD());
-        assertEq(compensation.totalSpent(), compensation.tranches() * compensation.trancheCap());
+        assertGe(compensation.totalSpent(), compensation.tranches() * compensation.trancheCap());
     }
 
     function invariantAllIMDRemainsAtAuthorizedDestinations() public view {

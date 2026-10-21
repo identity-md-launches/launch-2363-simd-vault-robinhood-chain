@@ -6,12 +6,13 @@ Completed on 2026-10-21 with Forge 1.8.3 and the repository-pinned Solidity 0.8.
 | --- | --- |
 | `forge build --sizes` | Pass |
 | `forge fmt --check` | Pass |
-| `forge test` with the supplied seed below | 59 passed, 0 failed; optional fork suite skipped without an active fork |
-| Explicit Robinhood fork suite at the chain's latest head (2026-10-21 revision) | 3 passed, 0 failed, 0 skipped; the live Intake accepted the `requestWithFailure` launch ask and the live factory position bound, bought back in ten tranches and paid fees |
+| `forge test` with the supplied seed below | 61 passed, 0 failed; optional fork suite skipped without an active fork |
+| Explicit Robinhood fork suite at the chain's latest head (2026-10-21 buyback revision, block 0x59d6d22) | 3 passed, 0 failed, 0 skipped; the live Intake accepted the `requestWithFailure` launch ask and the live factory position bound, bought back in ten full tranches with the fixed-reference band and paid fees |
+| Review reproductions `8d4670` (band-edge front-run) and `3d6c92` (in-band ratchet) against the unmodified v4 PoolManager | Both reproduced on the previous tree with the reviewer's figures (2 wei spent, 0 TEST, buyback finished; 859.79 TEST for 1000 IMD, 32.88 IMD attacker profit); both pass after the fix and are kept as `testRealV4BandEdgeFrontRunCannotEndOrDelayTheBuyback` and `testRealV4InBandSandwichDoesNotRatchetTheReference` |
 | `python3 -m unittest discover -s tools -p 'test_*.py'` | 4 passed |
 | Stateful accounting/custody/tranche invariants | 64 runs, 2,048 handler calls, 0 reverts |
 
-Fuzz seed: `0x547f4d53a2f8e5ab7d131094c43e5240c29a493ed4b594ab5c19e1e9aaafa71e`. Each of the three arithmetic fuzz tests ran 256 cases. Production runtime sizes: SIMDVault 5,996 bytes, HolderRewards 16,153, JobsVault 2,422, CompensationVault 7,658. SIMDVault initcode, including all child deployments, is 34,571 bytes, under the protected floor's 49,152-byte limit. No size-limit override is configured.
+Fuzz seed: `0x547f4d53a2f8e5ab7d131094c43e5240c29a493ed4b594ab5c19e1e9aaafa71e`. Each of the three arithmetic fuzz tests ran 256 cases. Production runtime sizes: SIMDVault 5,996 bytes, HolderRewards 16,153, JobsVault 2,422, CompensationVault 7,756. SIMDVault initcode, including all child deployments, is 34,669 bytes, under the protected floor's 49,152-byte limit. No size-limit override is configured.
 
 The fork suite retained live bytecode at all four fixed protocol addresses and successfully tested real Intake payment, factory requester validation, a fork-local factory launch, ten v4 buyback swaps, real factory fee payout, the weekly split, and burning. The public RPC pruned the initial historical block during development, so the final successful run used its latest head; use an archival RPC to replay a fixed historical block. Nothing was broadcast.
 

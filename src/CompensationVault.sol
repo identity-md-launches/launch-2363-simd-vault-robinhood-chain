@@ -61,6 +61,7 @@ contract CompensationVault is VaultChild, IUnlockCallback {
     event LaunchSet(address indexed token, bytes32 indexed poolId, uint256 buybackAvailableAt);
     event ReferencePriceRecorded(uint160 sqrtPriceX96);
     event BoughtBack(uint256 indexed tranche, uint256 spent, uint256 received);
+    event PartialFill(uint256 spent, uint256 received);
     event BuybackCompleted(uint256 totalSpent, uint256 remainingIMD);
     event AirdropStarted(uint256 tokenBalance);
     event CompensationPaid(address indexed account, uint256 weight, uint256 amount);
@@ -85,15 +86,17 @@ contract CompensationVault is VaultChild, IUnlockCallback {
         emit LaunchSet(token_, PoolId.unwrap(key.toId()), buybackAvailableAt);
     }
 
-    /// @notice Spend at most floor(initial balance / 10), at most ten times, ten minutes apart.
+    /// @notice Spend at most floor(initial balance / 10) per call, at most ten full tranches, with
+    /// spending rate-limited to one tranche cap per TRANCHE_INTERVAL.
     /// @dev Every swap is bounded to PRICE_BAND_BPS (in sqrt price) around a reference price that was
-    /// recorded at an earlier timestamp, so a caller cannot move the price and trigger a tranche in
-    /// the same transaction. A price outside that band swaps nothing and, at most once per
-    /// TRANCHE_INTERVAL, moves the reference one band step towards the pool price: whoever wants a
-    /// tranche to fill at a pushed price must hold that price against arbitrage for ten minutes per
-    /// 1.5% step. The tranche runs on a later call. A partial fill at the band counts as a tranche;
-    /// a swap that buys nothing ends the buyback. After BUYBACK_WINDOW anyone can end it so the
-    /// airdrop always opens.
+    /// recorded at an earlier timestamp. The reference moves only on the out-of-band path, by one
+    /// band step at most once per TRANCHE_INTERVAL, and never from the post-swap price of the call
+    /// that filled: a caller who positions the pool inside the band before calling can make that
+    /// one fill pay up to one band above the reference, but cannot carry the pushed price into the
+    /// next tranche's reference. A swap that stops at the band edge, or buys nothing, is a partial
+    /// fill: it is not a tranche, never ends the buyback, and its cooldown is proportional to what
+    /// it spent. The buyback ends after MAX_TRANCHES full tranches, when the IMD is spent, or
+    /// after BUYBACK_WINDOW, when anyone can end it so the airdrop always opens.
     function buyback() external nonReentrant {
         if (token == address(0)) revert NotConfigured();
         if (buybackComplete) revert BuybackFinished();
@@ -138,16 +141,21 @@ contract CompensationVault is VaultChild, IUnlockCallback {
         }
         uint256 received = IERC20(token).balanceOf(address(this)) - beforeTokens;
         totalSpent += paid;
-        (price,,,) = IPoolManager(Network.POOL_MANAGER).getSlot0(poolKey.toId());
-        _recordReference(price);
-        if (received == 0) {
-            // The pool cannot sell any more tokens for a tranche: nothing left worth buying.
-            _finishBuyback();
-            return;
+        // The reference never follows this transaction's post-swap price: a fill moves the pool
+        // price inside the band, and whoever positioned the pool before the call would otherwise
+        // choose the next reference. Only the rate-limited out-of-band step above moves it.
+        if (paid < spend || received == 0) {
+            // The swap stopped at the band edge, or found no liquidity inside the band. That is a
+            // partial fill, not a tranche, and it never ends the buyback: a pool parked one unit
+            // inside the edge by a front-runner would otherwise retire the budget for nothing. The
+            // cooldown scales with what was spent, so a dust fill cannot delay the next tranche.
+            nextBuybackAt = block.timestamp + TRANCHE_INTERVAL * paid / trancheCap;
+            emit PartialFill(paid, received);
+        } else {
+            ++tranches;
+            nextBuybackAt = block.timestamp + TRANCHE_INTERVAL;
+            emit BoughtBack(tranches, paid, received);
         }
-        ++tranches;
-        nextBuybackAt = block.timestamp + TRANCHE_INTERVAL;
-        emit BoughtBack(tranches, paid, received);
         if (tranches == MAX_TRANCHES || IERC20(Network.IMD).balanceOf(address(this)) == 0) _finishBuyback();
     }
 
