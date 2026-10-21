@@ -5,6 +5,9 @@ import {Test} from "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SIMDVault} from "../src/SIMDVault.sol";
+import {HolderRewards} from "../src/HolderRewards.sol";
+import {JobsVault} from "../src/JobsVault.sol";
+import {OracleAttestation, OracleAttestationConsumer} from "../src/oracle/OracleAttestation.sol";
 import {Network} from "../src/Network.sol";
 import {IIntake} from "../src/interfaces/IIntake.sol";
 import {ILaunchFactory} from "../src/interfaces/ILaunchFactory.sol";
@@ -60,7 +63,7 @@ contract ForkToken is ERC20 {
     }
 }
 
-/// @dev Default suite is network-free. Supply --fork-url explicitly to run these against real code.
+/// @dev Default suite is network-free. Supply --fork-url or ROBINHOOD_RPC_URL to use real code.
 contract RobinhoodForkTest is Test {
     uint64 private constant TEST_LAUNCH = type(uint64).max - 4663;
     ILiveFactory private constant factory = ILiveFactory(Network.FACTORY);
@@ -69,7 +72,11 @@ contract RobinhoodForkTest is Test {
     function setUp() public {
         try vm.activeFork() returns (uint256) {}
         catch {
-            vm.skip(true);
+            string memory url = vm.envOr("ROBINHOOD_RPC_URL", string(""));
+            if (bytes(url).length == 0) vm.skip(true);
+            uint256 forkBlock = vm.envOr("ROBINHOOD_FORK_BLOCK", uint256(0));
+            if (forkBlock == 0) vm.createSelectFork(url);
+            else vm.createSelectFork(url, forkBlock);
         }
         assertEq(block.chainid, 4663);
         assertGt(Network.INTAKE.code.length, 0);
@@ -139,6 +146,84 @@ contract RobinhoodForkTest is Test {
         vm.prank(Network.DEV);
         vm.expectRevert(SIMDVault.NotRequester.selector);
         vault.bindLaunch(TEST_LAUNCH, token);
+    }
+
+    function testRealIntakeJobsThresholdAndDailyCooldown() public {
+        address token = _launchFor(address(vault));
+        vm.prank(Network.DEV);
+        vault.bindLaunch(TEST_LAUNCH, token);
+        JobsVault jobs = vault.jobsVault();
+        address holder = makeAddr("fork job holder");
+        uint256 price = IIntake(Network.INTAKE).priceOf(Network.JOB_ACTION, Network.IMD);
+        assertGt(price, 0);
+        deal(Network.IMD, address(jobs), 3 * price);
+        deal(token, holder, 1_000_000 ether - 1);
+        bytes memory body =
+            bytes('{"objective":"Research the launch token public transfers.","template":"research"}');
+        vm.prank(holder);
+        vm.expectRevert(JobsVault.InsufficientHolding.selector);
+        jobs.requestJob(body);
+        deal(token, holder, 1_000_000 ether);
+        vm.prank(holder);
+        bytes32 first = jobs.requestJob(body);
+        assertTrue(first != bytes32(0));
+        assertEq(IERC20(Network.IMD).balanceOf(address(jobs)), 2 * price);
+        assertEq(IERC20(Network.IMD).allowance(address(jobs), Network.INTAKE), 0);
+        vm.warp(jobs.nextRequestAt(holder) - 1);
+        vm.prank(holder);
+        vm.expectRevert(JobsVault.DailyLimit.selector);
+        jobs.requestJob(body);
+        vm.warp(jobs.nextRequestAt(holder));
+        vm.prank(holder);
+        bytes32 second = jobs.requestJob(body);
+        assertTrue(second != bytes32(0) && second != first);
+        assertEq(IERC20(Network.IMD).balanceOf(address(jobs)), price);
+    }
+
+    function testRealOraclePaymentAndUnauthenticatedAnswerCannotUnlockPot() public {
+        address token = _launchFor(address(vault));
+        vm.prank(Network.DEV);
+        vault.bindLaunch(TEST_LAUNCH, token);
+        deal(Network.IMD, address(vault), 100 ether);
+        deal(token, address(vault), 10 ether);
+        // Native donations must also be accepted on real fork state and swept with the weekly payout.
+        vm.deal(address(this), 1 ether);
+        (bool sent,) = address(vault).call{value: 1 ether}("");
+        assertTrue(sent);
+        uint256 marketingBefore = Network.MARKETING.balance;
+        uint256 burnedBefore = IERC20(token).balanceOf(Network.BURN);
+        vault.distribute();
+        assertEq(Network.MARKETING.balance - marketingBefore, 1 ether);
+        assertEq(IERC20(token).balanceOf(Network.BURN) - burnedBefore, 10 ether);
+        HolderRewards rewards = vault.holderRewards();
+        HolderRewards.Epoch memory e = rewards.getEpoch(1);
+        assertTrue(e.requestId != bytes32(0), "real Intake rejected the oracle request");
+        assertEq(e.snapshotBlock, vm.getBlockNumber());
+        assertEq(rewards.pending(e.requestId), 1);
+        assertEq(IERC20(Network.IMD).balanceOf(address(rewards)), e.pot);
+        assertEq(IERC20(Network.IMD).allowance(address(rewards), Network.INTAKE), 0);
+
+        OracleAttestation.Attestation memory a;
+        a.requestId = keccak256("unsigned fork answer");
+        a.chainId = 4663;
+        a.questionHash = e.questionHash;
+        a.answerType = 2;
+        a.answer = abi.encode(bytes32(uint256(1)));
+        a.fromBlock = uint64(e.snapshotBlock);
+        a.toBlock = uint64(e.snapshotBlock);
+        a.panelSize = 30;
+        a.quorum = 20;
+        a.agreed = 25;
+        a.issuedAt = uint64(vm.getBlockTimestamp());
+        a.expiresAt = a.issuedAt + 1 days;
+        vm.expectRevert(HolderRewards.OnlyIntake.selector);
+        rewards.onOracleResult(e.requestId, a, "");
+        vm.prank(Network.INTAKE);
+        vm.expectRevert(OracleAttestationConsumer.BadSignature.selector);
+        rewards.onOracleResult(e.requestId, a, "");
+        assertFalse(rewards.getEpoch(1).ready);
+        assertEq(rewards.pending(e.requestId), 1);
+        assertEq(rewards.totalReserved(), e.pot);
     }
 
     function _launchFor(address requester) private returns (address token) {
